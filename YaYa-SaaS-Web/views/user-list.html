@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        .layui-layer{
+            border-radius: 10px;
+        }
+        /* 左侧固定宽度 */
+        .left {
+            width: 230px;
+            border-radius: 10px;
+            background-color: #fff;
+        }
+
+        /* 右侧自适应 */
+        .right {
+            margin-left: 10px;
+            flex: 1;
+            border-radius: 10px;
+            overflow: auto;
+        }
+        .layui-laydate .layui-this, .layui-laydate .layui-this>div{
+            background-color: #409eff !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container" style="display: flex;height: 100vh;">
+        <div class="left">
+            <!-- 搜索框 -->
+             <form class="layui-form">
+                <div class="layui-input-wrap" style="width: 92%;margin-top: 10px;margin-left: 4%;">
+                    <div class="layui-input-prefix">
+                        <i class="iconfont icon-CRMEB-sousuo-xianxing"></i>
+                    </div>
+                    <input type="text" name="deptName" placeholder="部门名" class="layui-input yaya-input-border-radius">
+                </div>
+            </form>
+            <!-- 部门列表 -->
+            <div id="dept-tree" style="width: 92%;margin-top: 10px;margin-left: 4%;padding-bottom: 20px;">
+                <!--  左侧部门列表  -->
+            </div>
+        </div>
+        <div class="right">
+            <div class="yaya-panel">
+                <form class="layui-form" style="padding: 10px 0;">
+                    <div class="layui-row">
+                        <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                            <label class="yaya-form-label">名称</label>
+                            <div class="yaya-input-block">
+                                <input type="text" name="nickname" placeholder="用户名称" class="layui-input yaya-input-border-radius">
+                            </div>
+                        </div>
+                        <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                            <label class="yaya-form-label">账号</label>
+                            <div class="yaya-input-block">
+                                <input type="text" name="username" placeholder="用户账号" class="layui-input yaya-input-border-radius">
+                            </div>
+                        </div>
+                        <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                            <label class="yaya-form-label">状态</label>
+                            <div class="yaya-input-block">
+                                <select name="isEnabled">
+                                    <option value="">状态</option>
+                                    <option value="1">正常</option>
+                                    <option value="0">停用</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                            <label class="yaya-form-label">角色</label>
+                            <div class="yaya-input-block">
+                                <input type="text" name="roleName" placeholder="角色名称" class="layui-input yaya-input-border-radius">
+                            </div>
+                        </div>
+                        <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                            <label class="yaya-form-label">时间</label>
+                            <div class="yaya-input-block">
+                                <input type="text" name="dateTime" class="layui-input yaya-input-border-radius" id="user-date-time" placeholder="时间范围">
+                            </div>
+                        </div>
+
+                        <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                            <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                            <button id="userReset" type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="yaya-panel" style="margin-top: 15px;padding-bottom: 20px;">
+                <!-- 菜单操作按钮 -->
+                <div id="ID-user-top-view" style="display: flex;flex-direction: row;justify-content: flex-end;padding: 10px;"></div>
+                <!-- 表格显示 -->
+                <table class="layui-hide" id="table-user" lay-filter="table-user"></table>
+            </div>
+        </div>
+    </div>
+    <!-- 表格单元格:删除-更新-添加 权限控制 -->
+    <script id="ID-user-unit-tpl" type="text/html">
+        {{# if(is_super || hasPermission('user-edit')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="edit"><i style="font-size: 12px;margin-right: 2px;" class="iconfont icon-CRMEB-tianxie"></i> 编辑</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('user-del')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+        {{# } }}
+    </script>
+    <!-- 顶部添加权限控制 -->
+    <script id="ID-user-top-tpl" type="text/html">
+        {{# if(is_super || hasPermission('user-add')){ }}
+        <button type="button" lay-event="user-add" class="yaya-btn is-plain-primary" style="margin-right: 5px;"><i class="iconfont icon-CRMEB-jia"></i>新增</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('user-import')){ }}
+        <button type="button" lay-event="user-import" class="yaya-btn is-plain-success" style="margin-right: 5px;"><i class="layui-icon layui-icon-upload-drag"></i>导入</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('user-batch-del')){ }}
+        <button type="button" lay-event="batch-del" class="yaya-btn is-plain-danger" style="margin-right: 5px;"><i class="layui-icon layui-icon-delete"></i>删除</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('reset-pwd')){ }}
+        <button type="button" lay-event="reset-pwd" class="yaya-btn is-plain-info" style="margin-right: 5px;"><i class="layui-icon layui-icon-vercode"></i>重置密码</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('user-enable')){ }}
+        <button type="button" lay-event="user-enable" class="yaya-btn is-plain-warning" style="margin-right: 5px;"><i class="layui-icon layui-icon-password"></i>用户解封</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('user-disable')){ }}
+        <button type="button" lay-event="user-dis-enable" class="yaya-btn yaya-default"><i class="layui-icon layui-icon-disabled"></i>用户封禁</button>
+        {{# } }}
+    </script>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const tree = layui.tree;
+            const $ = layui.$;
+            const form = layui.form;
+            const table = layui.table;
+            const layer = layui.layer;
+            const laytpl = layui.laytpl;
+            const laydate = layui.laydate;
+            const util = layui.util;
+
+
+            //时间选择控件
+            laydate.render({
+                elem: '#user-date-time',
+                type: 'date',
+                range: true
+            });
+
+
+            //声明一个搜索条件
+            let params={};
+
+            //重置请求参数
+            $("#userReset").click(function(){
+                params={};
+            });
+
+            
+
+            //单元格工具事件(一般用于进行编辑和删除操作)
+            table.on('tool(table-user)', function(obj){
+                //事件
+                let event = obj.event;
+                if(event==='del'){ //删除事件
+                    layer.confirm('确定删除吗？', function(index){
+                        layer.close(index);//关闭弹窗
+                        // 向后端发送删除请求，执行完毕后，可通过 reloadData 方法完成数据重载
+                        let userId = obj.data.userId;
+                        $.ajax({
+                            url: server_url+'/deleteSysUser',
+                            type:'POST',
+                            contentType:'application/json',
+                            dataType:'json',
+                            headers:{
+                                'Authorization': token
+                            },
+                            data:JSON.stringify([userId]),
+                            success: function(resp){
+                                if(resp.code===0){
+                                    //刷新
+                                    table.reload('table-user');
+                                }else{
+                                    layer.msg(resp.msg)
+                                }
+                            }
+                        });
+                    });
+                }else if(event==='edit'){ //编辑事件
+                    //处理岗位
+                    let posts = obj.data.sysPosts;
+                    let postIdStr="";
+                    if(posts && posts.length>0){
+                        postIdStr = posts.map(item=>item.postId).join(',');
+                    }
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        offset: '10px',
+                        area: ['550px', '550px'],
+                        title: '编辑',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: `user-edit.html?deptId=${obj.data.deptId}&roleId=${obj.data.roleId}&sex=${obj.data.sex}&postIdStr=${postIdStr}`,
+                        end: function(){
+                            //刷新表格
+                            table.reload('table-user');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="userId"]').val(obj.data.userId);
+                            //用户账号不回显
+                            //body.find('input[name="username"]').val(obj.data.username);
+                            body.find('input[name="nickname"]').val(obj.data.nickname);
+                            body.find('input[name="expiredTime"]').val(obj.data.expiredTime);
+                        }
+                    });
+                }else{
+                    layer.msg("功能还在路上,敬请期待~");
+                }
+            });
+
+
+
+            // 头部工具栏事件
+            table.on('toolbar(table-user)', function(obj){
+
+                //获取多选框的数据
+                let options = obj.config; // 获取当前表格属性选项
+                let checkStatus = table.checkStatus(options.id); // 获取选中行相关数据    
+                let data = checkStatus.data;
+
+                // 根据不同的事件名进行相应的操作
+                switch(obj.event){ // 对应模板元素中的 lay-event 属性值
+                    case 'user-add':
+                        layer.open({
+                            type: 2, // page 层类型 iframe
+                            offset: '10px',
+                            area: ['550px', '550px'],
+                            title: '添加',
+                            shade: 0.6, // 遮罩透明度
+                            shadeClose: true, // 点击遮罩区域，关闭弹层
+                            content: 'user-add.html',
+                            end: function(){
+                                //刷新表格
+                                table.reload('table-user');
+                            }
+                        });
+                    break;
+                    case 'user-import':
+                        layer.open({
+                            type: 2, // page 层类型 iframe
+                            offset: '10px',
+                            area: ['900px', '530px'],
+                            title: '导入',
+                            shade: 0.6, // 遮罩透明度
+                            shadeClose: true, // 点击遮罩区域，关闭弹层
+                            content: 'user-import.html',
+                            end: function(){
+                                //刷新表格
+                                table.reload('table-user');
+                            }
+                        });
+                    break;
+                    case 'batch-del':
+                        //删除
+                        if(data && data.length>0){
+                            let userIds = data.map(item=>item.userId);
+                            layer.confirm('确定删除吗？', function(index){
+                                layer.close(index);//关闭弹窗
+                                $.ajax({
+                                    url: server_url+'/deleteSysUser',
+                                    type:'POST',
+                                    contentType:'application/json',
+                                    dataType:'json',
+                                    headers:{
+                                        'Authorization': token
+                                    },
+                                    data:JSON.stringify(userIds),
+                                    success: function(resp){
+                                        if(resp.code===0){
+                                            //刷新
+                                            table.reload('table-user');
+                                        }else{
+                                            layer.msg(resp.msg)
+                                        }
+                                    }
+                                });
+                            });
+                        }else{
+                            layer.msg("请选择要删除的用户");
+                        }
+                    break;
+                    case 'reset-pwd':
+                        //重置密码
+                        if(data && data.length>0){
+                            let userIds = data.map(item=>item.userId);
+                            layer.prompt({title: '输入要重置的密码', formType: 1}, function(pass, index){
+                                let param=JSON.stringify({resetPassword:pass,userIds:userIds});
+                                $.ajax({
+                                    url: server_url+'/resetSysUserPassword',
+                                    type:'POST',
+                                    contentType:'application/json',
+                                    dataType:'json',
+                                    headers:{
+                                        'Authorization': token
+                                    },
+                                    data:param,
+                                    success: function(resp){
+                                        if(resp.code===0){
+                                            layer.close(index);//关闭弹窗
+                                            layer.msg("重置完成✅");
+                                            //刷新
+                                            table.reload('table-user');
+                                        }else{
+                                            layer.msg(resp.msg)
+                                        }
+                                    }
+                                });
+                            });
+                        }else{
+                            layer.msg("请选择要重置的用户");
+                        }
+                    break;
+                    case 'user-enable':
+                        //用户解封
+                        if(data && data.length>0){
+                            let userIds = data.map(item=>item.userId);
+                            layer.confirm('确定解封用户吗？', function(index){
+                                layer.close(index);//关闭弹窗
+                                $.ajax({
+                                    url: server_url+'/batchEnableSysUserStatus',
+                                    type:'POST',
+                                    contentType:'application/json',
+                                    dataType:'json',
+                                    headers:{
+                                        'Authorization': token
+                                    },
+                                    data:JSON.stringify(userIds),
+                                    success: function(resp){
+                                        if(resp.code===0){
+                                            layer.msg("解封完成✅");
+                                            //刷新
+                                            table.reload('table-user');
+                                        }else{
+                                            layer.msg(resp.msg)
+                                        }
+                                    }
+                                });
+                            });
+                        }else{
+                            layer.msg("请选择要解封的用户");
+                        }
+
+                    break;
+                    case 'user-dis-enable':
+                    
+                        //用户封禁
+                        if(data && data.length>0){
+                            let userIds = data.map(item=>item.userId);
+                            layer.confirm('确定封禁用户吗？', function(index){
+                                layer.close(index);//关闭弹窗
+                                $.ajax({
+                                    url: server_url+'/batchDisSysUserStatus',
+                                    type:'POST',
+                                    contentType:'application/json',
+                                    dataType:'json',
+                                    headers:{
+                                        'Authorization': token
+                                    },
+                                    data:JSON.stringify(userIds),
+                                    success: function(resp){
+                                        if(resp.code===0){
+                                            layer.msg("封禁完成✅");
+                                            //刷新
+                                            table.reload('table-user');
+                                        }else{
+                                            layer.msg(resp.msg)
+                                        }
+                                    }
+                                });
+                            });
+                        }else{
+                            layer.msg("请选择要封禁的用户");
+                        }
+
+                    break;
+                };
+            });
+
+            //搜索
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                //时间处理
+                let dateTime = field.dateTime;
+                if(dateTime && dateTime.length>0){
+                    let dates =  dateTime.split(" - ");
+                    if(dates && dates.length>1){
+                        let start = dates[0];
+                        let end = dates[1];
+                        field.start = start+" 00:00:00";
+                        field.end = end+" 23:59:59";
+                    }
+                }
+                //参数构建
+                params = Object.assign({},params,field);
+                // 执行搜索重载
+                table.reload('table-user', {
+                    page: {
+                        curr: 1, // 重新从第 1 页开始
+                        prev:'上一页',
+                        next:'下一页',
+                        limit:10,
+                        limits:[10,20,30,40,50],
+                        theme:'#409eff'
+                    },
+                    where: params // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+            
+            //搜索部门
+            $('input[name="deptName"]').on('input', function(){
+                var keyword = $(this).val().trim();
+                $.ajax({
+                    type:'POST',
+                    url:server_url+'/getSysDepartmentTree',
+                    dataType:'json',
+                    headers:{
+                        'Authorization':token
+                    },
+                    success: function(response){
+                        let data = response.data;
+                        /* 左侧树状部门渲染显示 */
+                        tree.render({
+                            elem: '#dept-tree',
+                            data: searchDeptTree(data, keyword),
+                            showLine: false,
+                            onlyIconControl: true,  // 是否仅允许节点左侧图标控制展开收缩
+                            customName:{
+                                id: 'deptId',
+                                title: 'deptName',
+                                children: 'children'
+                            },
+                            click: function(obj){
+                                params = Object.assign({},params,{deptId:obj.data.deptId});
+                                table.reload('table-user', {
+                                    page: {
+                                        curr: 1, // 重新从第 1 页开始
+                                        prev:'上一页',
+                                        next:'下一页',
+                                        limit:10,
+                                        limits:[10,20,30,40,50],
+                                        theme:'#409eff'
+                                    },
+                                    where: params // 搜索的字段
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            //表格渲染
+            table.render({
+                elem: '#table-user',
+                url: server_url+'/getSysUserPage',
+                method:'POST',
+                headers:{
+                    'Authorization':token
+                },
+                skin:'line',
+                height:'full',
+                toolbar:'#ID-user-top-tpl',
+                defaultToolbar:[], //表格头部右侧工具栏,隐藏
+                parseData: function(res){
+                    return {
+                        "code" : res.code,
+                        "msg"  : res.msg,
+                        "data" : res.data.records,
+                        "count": res.data.total
+                    }
+                },
+                page:{
+                    prev:'上一页',
+                    next:'下一页',
+                    limit:10,
+                    limits:[10,20,30,40,50],
+                    theme:'#409eff'
+                },
+                request: {
+                    pageName: 'pageNo', // 页码的参数名称，默认：page
+                    limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
+                },
+                cols: [[
+                    {type: 'checkbox', fixed: 'left'},
+                    {title: '序号',type: 'numbers'},
+                    {
+                        field:'nickname',
+                        title: '用户名',
+                        width:150
+                    },
+                    {
+                        title: '头像',
+                        align:'center',
+                        templet: function(d){
+                            let avatar=`
+                                <div style="width:100%;height:100%;display: flex;align-items: center;justify-content: center;">
+                                    <img style='width:36px;heigh:36px;border-radius:50%;' src="${file_url}/${d.avatar}" alt="头像">    
+                                </div>
+                            `;
+                            return avatar;
+                        },
+                        width:150
+                    },
+                    {
+                        field:'username',
+                        title:'账号',
+                        width:150
+                    },
+                    {
+                        field:'fullNamePath',
+                        title: '部门路径',
+                        width:200
+                    },
+                    {
+                        title:'状态',
+                        templet: function(d){
+                            return d.isEnabled==1? `<span class="yaya-tag yaya-tag-light-success tag-small">正常</span>`:`<span class="yaya-tag yaya-tag-light-danger tag-small">停用</span>`;
+                        },
+                        width:80
+                    },
+                    {
+                        title:'角色',
+                        templet: function(d){
+                            return d.sysRole.roleName;
+                        },
+                        width:150
+                    },
+                    {
+                        title:'岗位',
+                        templet: function(d){
+                            return (d.sysPosts && d.sysPosts.length>0)?d.sysPosts.map(item=>item.postName).join(","):'';
+                        },
+                        width:200
+                    },
+                    {
+                        field:'createTime',
+                        title: '创建时间',
+                        width:200
+                    },
+                    {
+                        field:'expiredTime',
+                        title: '过期时间',
+                        width:200
+                    },
+                    {
+                        width:150,
+                        title: '操作',
+                        fixed: 'right',
+                        templet: '#ID-user-unit-tpl'
+                    }
+                ]]
+            });
+
+
+
+            /**
+             * 左侧部门初始化
+             */
+            $.ajax({
+                type:'POST',
+                url:server_url+'/getSysDepartmentTree',
+                dataType:'json',
+                headers:{
+                    'Authorization':token
+                },
+                success: function(response){
+                    let data = response.data;
+                    /* 左侧树状部门渲染显示 */
+                    tree.render({
+                        elem: '#dept-tree',
+                        data: data,
+                        showLine: false,  // 是否仅允许节点左侧图标控制展开收缩
+                        customName:{
+                            id: 'deptId',
+                            title: 'deptName',
+                            children: 'children'
+                        },
+                        click: function(obj){
+                            params = Object.assign({},params,{deptId:obj.data.deptId});
+                            table.reload('table-user', {
+                                page: {
+                                    curr: 1, // 重新从第 1 页开始
+                                    prev:'上一页',
+                                    next:'下一页',
+                                    limit:10,
+                                    limits:[10,20,30,40,50],
+                                    theme:'#409eff'
+                                },
+                                where: params // 搜索的字段
+                            });
+                        }
+                    });
+                }
+            });
+
+
+            /**
+             * 树状部门搜索
+             * @param {Array} tree - 原始部门树数据
+             * @param {String} keyword - 搜索关键词
+             * @returns {Array} - 过滤后的新树状数组
+             */
+            function searchDeptTree(tree, keyword) {
+                // 1. 如果没有关键词，直接克隆并返回全量数据（避免引用污染）
+                if (!keyword || keyword.trim() === "") {
+                    return JSON.parse(JSON.stringify(tree));
+                }
+                const query = keyword.trim();
+                // 2. 使用 map + filter 进行递归过滤
+                return tree.map(node => {
+                    // 深度克隆当前节点，防止修改原数据
+                    const newNode = { ...node };
+
+                    // 3. 如果有子部门，先递归过滤子部门
+                    if (newNode.children && newNode.children.length > 0) {
+                        newNode.children = searchDeptTree(newNode.children, query);
+                    }
+                    return newNode;
+                }).filter(node => {
+                    // 4. 判断保留条件：
+                    // 条件 A: 当前部门名称包含关键词
+                    const isMatch = node.deptName && node.deptName.includes(query);
+                    
+                    // 条件 B: 子部门递归过滤后仍有数据（说明子孙节点有匹配）
+                    const hasMatchingChildren = node.children && node.children.length > 0;
+
+                    // 只要满足其一，就保留这个节点
+                    return isMatch || hasMatchingChildren;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yaya.mapper.SysMenuMapper">
+
+    <resultMap id="menuTreeMap" type="com.yaya.entity.SysMenu">
+        <id column="menu_id" property="menuId" />
+        <result column="menu_title" property="menuTitle" />
+        <result column="menu_icon" property="menuIcon" />
+        <result column="menu_type" property="menuType" />
+        <result column="perms" property="perms" />
+        <result column="menu_url" property="menuUrl" />
+        <result column="parent_id" property="parentId" />
+        <result column="sort" property="sort" />
+        <result column="status" property="status" />
+        <result column="create_id" property="createId" />
+        <result column="update_id" property="updateId" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <collection property="children" ofType="com.yaya.entity.SysMenu" column="{menuId=menu_id,status=status}" select="com.yaya.mapper.SysMenuMapper.getSubSysMenuTree" />
+    </resultMap>
+    <select id="getSysMenuTree" resultMap="menuTreeMap">
+        SELECT
+            menu_id,
+            menu_title,
+            menu_icon,
+            menu_type,
+            perms,
+            menu_url,
+            parent_id,
+            `sort`,
+            `status`,
+            create_id,
+            update_id,
+            create_time,
+            update_time
+        FROM
+            sys_menu
+        <where>
+            parent_id=0
+            <if test="menuTitle!=null and menuTitle!=''">
+               AND menu_title LIKE CONCAT( '%', #{menuTitle}, '%' )
+            </if>
+            <if test="status!=null">AND `status`=#{status}</if>
+        </where>
+        ORDER BY `sort`,update_time DESC
+    </select>
+
+    <select id="getSubSysMenuTree" resultMap="menuTreeMap">
+        SELECT
+            menu_id,
+            menu_title,
+            menu_icon,
+            menu_type,
+            perms,
+            menu_url,
+            parent_id,
+            `sort`,
+            `status`,
+            create_id,
+            update_id,
+            create_time,
+            update_time
+        FROM
+            sys_menu
+        <where>
+            parent_id = #{menuId}
+            <if test="status!=null">AND `status`=#{status}</if>
+        </where>
+        ORDER BY `sort`,update_time DESC
+    </select>
+
+
+
+
+    <resultMap id="menuTreeButtonMap" type="com.yaya.entity.SysMenu">
+        <id column="menu_id" property="menuId" />
+        <result column="menu_title" property="menuTitle" />
+        <result column="menu_icon" property="menuIcon" />
+        <result column="menu_type" property="menuType" />
+        <result column="perms" property="perms" />
+        <result column="menu_url" property="menuUrl" />
+        <result column="parent_id" property="parentId" />
+        <result column="sort" property="sort" />
+        <result column="status" property="status" />
+        <result column="create_id" property="createId" />
+        <result column="update_id" property="updateId" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <collection property="children" ofType="com.yaya.entity.SysMenu" column="{menuId=menu_id}" select="com.yaya.mapper.SysMenuMapper.getSubSysMenuTreeExcludeButton" />
+    </resultMap>
+
+
+    <select id="getSysMenuTreeExcludeButton" resultMap="menuTreeButtonMap">
+        SELECT
+            menu_id,
+            menu_title,
+            menu_icon,
+            menu_type,
+            perms,
+            menu_url,
+            parent_id,
+            `sort`,
+            `status`,
+            create_id,
+            update_id,
+            create_time,
+            update_time
+        FROM
+            sys_menu
+        <where>
+            parent_id = 0
+            AND `status`=1
+            AND menu_type IN(1,2)
+            <if test="menuTitle!=null and menuTitle!=''">AND menu_title LIKE CONCAT('%',#{menuTitle},'%')</if>
+        </where>
+        ORDER BY `sort`,update_time DESC
+    </select>
+
+    <select id="getSubSysMenuTreeExcludeButton" resultMap="menuTreeButtonMap">
+        SELECT
+            menu_id,
+            menu_title,
+            menu_icon,
+            menu_type,
+            perms,
+            menu_url,
+            parent_id,
+            `sort`,
+            `status`,
+            create_id,
+            update_id,
+            create_time,
+            update_time
+        FROM
+            sys_menu
+        WHERE
+            parent_id = #{menuId}
+            AND `status`=1
+            AND menu_type IN(1,2)
+            ORDER BY `sort`,update_time DESC
+    </select>
+
+
+    <resultMap id="menuAuthTreeButtonMap" type="com.yaya.entity.SysMenu">
+        <id column="menu_id" property="menuId" />
+        <result column="menu_title" property="menuTitle" />
+        <result column="menu_icon" property="menuIcon" />
+        <result column="menu_type" property="menuType" />
+        <result column="perms" property="perms" />
+        <result column="menu_url" property="menuUrl" />
+        <result column="parent_id" property="parentId" />
+        <result column="sort" property="sort" />
+        <result column="status" property="status" />
+        <result column="create_id" property="createId" />
+        <result column="update_id" property="updateId" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <collection property="children" ofType="com.yaya.entity.SysMenu" column="{menuId=menu_id,roleId=role_id}" select="com.yaya.mapper.SysMenuMapper.getAuthSubSysMenuTreeExcludeButton" />
+    </resultMap>
+
+    <select id="getAuthSysMenuTreeExcludeButton" resultMap="menuAuthTreeButtonMap">
+        SELECT
+            m.menu_id,
+            m.menu_title,
+            m.menu_icon,
+            m.menu_type,
+            m.perms,
+            m.menu_url,
+            m.parent_id,
+            m.`sort`,
+            m.`status`,
+            m.create_id,
+            m.update_id,
+            m.create_time,
+            m.update_time,
+            rm.role_id
+        FROM
+            sys_role_menu rm,
+            sys_menu m
+        WHERE
+            rm.menu_id = m.menu_id
+            AND m.parent_id = 0
+            AND m.`status` = 1
+            AND m.menu_type IN ( 1, 2 )
+            AND rm.role_id = #{roleId}
+            ORDER BY sort,m.update_time DESC
+    </select>
+    
+    <select id="getAuthSubSysMenuTreeExcludeButton" resultMap="menuAuthTreeButtonMap">
+        SELECT
+            m.menu_id,
+            m.menu_title,
+            m.menu_icon,
+            m.menu_type,
+            m.perms,
+            m.menu_url,
+            m.parent_id,
+            m.`sort`,
+            m.`status`,
+            m.create_id,
+            m.update_id,
+            m.create_time,
+            m.update_time,
+            rm.role_id
+        FROM
+            sys_role_menu rm,
+            sys_menu m
+        WHERE
+            rm.menu_id = m.menu_id
+            AND parent_id = #{menuId}
+            AND rm.role_id = #{roleId}
+            AND m.`status` = 1
+            AND m.menu_type IN ( 1, 2 )
+            ORDER BY sort,m.update_time DESC
+    </select>
+
+</mapper>

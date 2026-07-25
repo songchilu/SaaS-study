@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="padding: 10px 0;">
+                <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">地址</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="ip" placeholder="IP" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
+            <!-- 表格显示 -->
+            <table class="layui-hide" id="table-login-log" lay-filter="table-login-log"></table>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const table = layui.table;
+            const layer = layui.layer;
+
+            //搜索
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                // 执行搜索重载
+                table.reload('table-login-log', {
+                    page: {
+                        curr: 1, // 重新从第 1 页开始
+                        prev:'上一页',
+                        next:'下一页',
+                        limit:10,
+                        limits:[10,20,30,40,50],
+                        theme:'#409eff'
+                    },
+                    where: field // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+
+            //表格渲染
+            table.render({
+                elem: '#table-login-log',
+                url: server_url+'/getSysLogPage',
+                method:'POST',
+                where:{
+                    logType:1
+                },
+                headers:{
+                    'Authorization':token
+                },
+                skin:'line',
+                height:'full',
+                parseData: function(res){
+                    //console.log(res);
+                    return {
+                        "code" : res.code,
+                        "msg"  : res.msg,
+                        "data" : res.data.records,
+                        "count": res.data.total
+                    }
+                },
+                page:{
+                    prev:'上一页',
+                    next:'下一页',
+                    limit:10,
+                    limits:[10,20,30,40,50],
+                    theme:'#409eff'
+                },
+                request: {
+                    pageName: 'pageNo', // 页码的参数名称，默认：page
+                    limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
+                },
+                cols: [[
+                    {
+                        title: '#',
+                        type: 'numbers'
+                    },
+                    {
+                        field:'businessName',
+                        title: '功能',
+                        width:'18%'
+                    },
+                    {
+                        field:'requestUrl',
+                        title:'请求地址'
+                    },
+                    {
+                        field:'executionTime',
+                        title: '执行时间(毫秒)'
+                    },
+                    {
+                        title:'状态',
+                        templet: function(d){
+                            return d.status==1? `<span class="yaya-tag yaya-tag-light-success tag-small">成功</span>`:`<span class="yaya-tag yaya-tag-light-danger tag-small">失败</span>`;
+                        }
+                    },
+                    {
+                        field:'operTime',
+                        width:200,
+                        title: '操作时间'
+                    },
+                    {
+                        field:'browser',
+                        title:'浏览器'
+                    },
+                    {
+                        field:'ip',
+                        title:'IP'
+                    },
+                    {
+                        field:'address',
+                        title:'地址'
+                    }
+                ]]
+            })
+
+        });
+    </script>
+</body>
+</html>

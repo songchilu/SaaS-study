@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 读取 Spring 环境变量：yaya.path -->
+    <springProperty scope="context" name="LOG_PATH" source="yaya.log-url" defaultValue="./log"/>
+
+    <!-- 控制台输出配置 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}-[%X{trackId}]- %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 文件输出配置 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 时时日志的名称 -->
+        <file>${LOG_PATH}/yaya-saas-plus.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 最终生成日志文件的名称,以天作为基本单元 -->
+            <fileNamePattern>${LOG_PATH}/yaya-saas-plus.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 存储60天历史记录 -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}-[%X{trackId}]- %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 文件输出配置 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 时时日志的名称 -->
+        <file>${LOG_PATH}/yaya-saas-plus-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 最终生成日志文件的名称,以天作为基本单元 -->
+            <fileNamePattern>${LOG_PATH}/yaya-saas-plus-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 存储60天历史记录 -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <!-- 只记录ERROR -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}-[%X{trackId}]- %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 日志级别 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+</configuration>

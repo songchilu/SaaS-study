@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yaya.mapper.SysLogMapper">
+
+    <select id="getSysLogPage" resultType="com.yaya.entity.SysLog">
+        SELECT
+            l.*,
+            u.username,
+            u.nickname
+        FROM
+            sys_log l
+            LEFT JOIN sys_user u ON l.create_id = u.user_id
+        <where>
+            <if test="logType!=null">l.log_type=#{logType}</if>
+            <if test="ip!=null and ip!=''">AND l.ip LIKE CONCAT( '%', #{ip}, '%' )</if>
+            <if test="requestUrl!=null and requestUrl!=''">AND l.request_url LIKE CONCAT( '%', #{requestUrl}, '%' )</if>
+            <if test="username!=null and username!=''">AND u.username LIKE CONCAT( '%', #{username}, '%' )</if>
+            <if test="trackId!=null and trackId!=''">AND l.track_id LIKE CONCAT( '%', #{trackId}, '%' )</if>
+        </where>
+        ORDER BY l.oper_time DESC
+    </select>
+    
+    <select id="getPageViews" resultType="long">
+        SELECT
+            COUNT( * )
+        FROM
+            sys_log
+        WHERE
+            dept_id IN ( SELECT DISTINCT dept_id FROM sys_department WHERE dept_id = #{deptId} OR FIND_IN_SET( #{deptId}, tree_path ) )
+            AND oper_time <![CDATA[ >= ]]> #{startTime} AND oper_time <![CDATA[ < ]]> #{endTime}
+    </select>
+    
+    <select id="getVisitor" resultType="long">
+        SELECT
+            COUNT( DISTINCT create_id )
+        FROM
+            sys_log
+        <where>
+            oper_time <![CDATA[ >= ]]> #{startTime} AND oper_time <![CDATA[ < ]]> #{endTime}
+            <if test="deptId!=null">
+                AND dept_id IN ( SELECT DISTINCT dept_id FROM sys_department WHERE dept_id = #{deptId} OR FIND_IN_SET( #{deptId}, tree_path ) )
+            </if>
+        </where>
+    </select>
+    
+    <select id="getChartSysUserUvPv" resultType="com.yaya.model.resp.SysUserUvPvResp">
+        SELECT
+            c.`stat_date`,
+            COUNT( DISTINCT l.`create_id` ) AS `total_uv`,
+            COUNT( l.`log_id` ) AS `total_pv`
+        FROM
+        (
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 0 DAY ) AS `stat_date` UNION ALL
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 1 DAY ) AS `stat_date` UNION ALL
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 2 DAY ) AS `stat_date` UNION ALL
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 3 DAY ) AS `stat_date` UNION ALL
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 4 DAY ) AS `stat_date` UNION ALL
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 5 DAY ) AS `stat_date` UNION ALL
+            SELECT DATE_SUB( CURDATE( ), INTERVAL 6 DAY ) AS `stat_date`
+        ) c
+        LEFT JOIN `sys_log` l ON l.`oper_time` <![CDATA[ >= ]]> c.`stat_date`
+            AND l.`oper_time` <![CDATA[ < ]]> DATE_ADD( c.`stat_date`, INTERVAL 1 DAY )
+            <if test="deptId!=null">
+                AND l.dept_id IN(SELECT DISTINCT dept_id FROM sys_department WHERE dept_id = #{deptId} OR FIND_IN_SET( #{deptId}, tree_path ))
+            </if>
+        GROUP BY
+            c.`stat_date`
+        ORDER BY
+            c.`stat_date` ASC
+    </select>
+</mapper>

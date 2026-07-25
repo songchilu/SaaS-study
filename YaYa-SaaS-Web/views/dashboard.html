@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <title>yaya-admin-plus</title>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="dashboard">
+            <div class="container">
+                <!-- ================= 卡片 ================= -->
+                <div class="card-list">
+                    <div class="card">
+                        <div class="icon blue"> <i class="layui-icon layui-icon-wifi"></i> </div>
+                        <div class="info">
+                            <div class="title">在线用户</div>
+                            <div id="online" class="value">1</div>
+                        </div>
+                        <div class="trend up">在线</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="icon purple"><i class="layui-icon layui-icon-username"></i> </div>
+                        <div class="info">
+                            <div class="title">今日访客(UV)</div>
+                            <div id="visitor" class="value">1</div>
+                        </div>
+                        <div id="visitorPer" class="trend up">1</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="icon cyan"><i class="layui-icon layui-icon-test"></i> </div>
+                        <div class="info">
+                            <div class="title">今日浏览量(PV)</div>
+                            <div id="pageView" class="value">1</div>
+                        </div>
+                        <div id="pageViewPer" class="trend up">1</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="icon green"><i class="layui-icon layui-icon-group"></i> </div>
+                        <div class="info">
+                            <div class="title">系统用户</div>
+                            <div id="sysUser" class="value">6</div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ================= 图表 ================= -->
+                <div class="chart-box">
+                    <div id="chart" lay-filter="chartTab"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../js/echarts.min.js"></script>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+
+    <script>
+
+        layui.use(function(){
+            const layer = layui.layer;
+            const $ = layui.$;
+
+            //执行
+            getSelectNavCount();
+
+            //是否在线的心跳检测 30秒检测一次
+            setInterval(function(){
+                $.ajax({
+                    type:'POST',
+                    url: server_url+'/heartbeat',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                            console.log("在线心跳检查...");
+                        }
+                    }
+                });
+            },5000);
+
+            //刷新页面显示
+            setInterval(function(){
+                getSelectNavCount();
+            },10000);
+
+
+            //获取选项卡统计数据
+            function getSelectNavCount(){
+                //在线人数
+                $.ajax({
+                    type:'POST',
+                    url: server_url+'/getOnlineUserCount',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                            $("#online").html(response.data);
+                        }
+                    }
+                });
+
+                //今日浏览量(PV)
+                $.ajax({
+                    type:'POST',
+                    url: server_url+'/getTodayPageViews',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                           let data = response.data;
+                           $("#pageView").html(data.pageViewCount);
+                           let num =  Number(data.pageViewDiff);
+                           if(num>=0){
+                                $("#pageViewPer").html("↑ "+num);
+                           }else{
+                                $("#pageViewPer").html("↓ "+num);
+                           }
+                           
+                        }
+                    }
+                });
+
+                //今日访问量
+                $.ajax({
+                    type:'POST',
+                    url: server_url+'/getTodayVisitor',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                           let data = response.data;
+                           $("#visitor").html(data.visitorCount);
+                           let num =  Number(data.visitorDiff);
+                           if(num>=0){
+                                $("#visitorPer").html("↑ "+num);
+                           }else{
+                                 $("#visitorPer").html("↓ "+num);
+                           }
+                           
+                        }
+                    }
+                });
+
+                //系统用户数
+                $.ajax({
+                    type:'POST',
+                    url: server_url+'/getSysUserCount',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                           let data = response.data;
+                           $("#sysUser").html(data);
+                        }
+                    }
+                });
+
+            }
+
+    
+            //图表
+            $.ajax({
+                type:'POST',
+                url: server_url+'/getChartSysUserUvPv',
+                headers:{
+                    'Authorization': token
+                },
+                contentType:'application/json',
+                dataType:'json',
+                success:function(response){
+                    if(response.code===0){
+                        let data =  response.data;
+                        //console.log(data);
+
+                        // ===== 初始化 ECharts =====
+                        const chart = echarts.init(document.getElementById('chart'));
+
+                        // 最近7天
+                        const days = data.map(item=>item.statDate);
+
+                        // 模拟数据
+                        const totalUv = data.map(item=>item.totalUv); //访问量(UV)
+                        const totalPv  = data.map(item=>item.totalPv);//浏览量(PV)
+
+                        const option = {
+                            color: ['#37A2FF','#00DDFF'],
+                            tooltip: {
+                                trigger: 'axis',
+                                axisPointer: {
+                                    type: 'cross',
+                                    label: {
+                                        backgroundColor: '#6a7985'
+                                    }
+                                }
+                            },
+                            legend: {
+                                data: ['访问量(uv)','浏览量(pv)'],
+                                top:0,
+                                left: 'center',
+                                textStyle: { color: '#888888' }
+                            },
+                            toolbox: {
+                                feature: {
+                                    saveAsImage: {}
+                                }
+                            },
+                            grid: {
+                                left: '3%',
+                                right: '4%',
+                                bottom: '3%',
+                                containLabel: true
+                            },
+                            xAxis: [
+                                {
+                                    type: 'category',
+                                    boundaryGap: false,
+                                    data: days
+                                }
+                            ],
+                            yAxis: [
+                                {
+                                    type: 'value'
+                                }
+                            ],
+                            series: [
+                                {
+                                    name: '访问量(uv)',
+                                    type: 'line',
+                                    stack: 'Total',
+                                    smooth: true,
+                                    lineStyle: {
+                                        width: 0
+                                    },
+                                    showSymbol: false,
+                                    areaStyle: {
+                                        opacity: 0.8,
+                                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {
+                                            offset: 0,
+                                            color: 'rgb(0, 221, 255)'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: 'rgb(77, 119, 255)'
+                                        }
+                                        ])
+                                    },
+                                    emphasis: {
+                                        focus: 'series'
+                                    },
+                                    data: totalUv
+                                },
+                                {
+                                    name: '浏览量(pv)',
+                                    type: 'line',
+                                    stack: 'Total',
+                                    smooth: true,
+                                    lineStyle: {
+                                        width: 0
+                                    },
+                                    showSymbol: false,
+                                    areaStyle: {
+                                        opacity: 0.8,
+                                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {
+                                            offset: 0,
+                                            color: 'rgb(55, 162, 255)'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: 'rgb(116, 21, 219)'
+                                        }
+                                        ])
+                                    },
+                                    emphasis: {
+                                        focus: 'series'
+                                    },
+                                    data: totalPv
+                                }
+                            ]
+                        };
+
+                        // const option = {
+                        //     color: ['#FF0087', '#FFBF00'],
+                        //     tooltip: { 
+                        //         trigger: 'axis',
+                        //         axisPointer: {
+                        //             type: 'cross',
+                        //             label: {
+                        //                 backgroundColor: '#6a7985'
+                        //             }
+                        //         }
+                        //     },
+                        //     legend: { 
+                        //         data: ['访问量(uv)','浏览量(pv)'] ,
+                        //         top:0,
+                        //         left: 'center',
+                        //         textStyle: { color: '#888888' }
+                        //     },
+                        //     toolbox: {
+                        //         feature: {
+                        //             saveAsImage: {}
+                        //         }
+                        //     },
+                        //     grid: {
+                        //         left: '3%',
+                        //         right: '4%',
+                        //         bottom: '3%',
+                        //         containLabel: true
+                        //     },
+
+                        //     xAxis: {
+                        //         type: 'category',
+                        //         boundaryGap: false,
+                        //         data: days
+                        //     },
+
+                        //     yAxis: {
+                        //         type: 'value'
+                        //     },
+
+                        //     series: [
+                        //         {
+                        //             name: '访问量(uv)',
+                        //             type: 'line',
+                        //             smooth: true,
+                        //             data: totalUv,
+                        //             itemStyle: { color: '#5b8ff9' },
+                        //             areaStyle: { 
+                        //                 opacity: 0.15,
+                        //                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        //                     {
+                        //                         offset: 0,
+                        //                         color: 'rgb(128, 255, 165)'
+                        //                     },
+                        //                     {
+                        //                         offset: 1,
+                        //                         color: 'rgb(1, 191, 236)'
+                        //                     }
+                        //                 ])
+                        //             },
+                        //             emphasis: {
+                        //                 focus: 'series'
+                        //             }
+                        //         },
+                        //         {
+                        //             name: '浏览量(pv)',
+                        //             type: 'line',
+                        //             smooth: true,
+                        //             data: totalPv,
+                        //             itemStyle: { color: '#36cfc9' },
+                        //             areaStyle: { 
+                        //                 opacity: 0.12,
+                        //                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        //                     {
+                        //                         offset: 0,
+                        //                         color: 'rgb(55, 162, 255)'
+                        //                     },
+                        //                     {
+                        //                         offset: 1,
+                        //                         color: 'rgb(116, 21, 219)'
+                        //                     }
+                        //                 ])
+                        //             },
+                        //             emphasis: {
+                        //                 focus: 'series'
+                        //             }
+                        //         }
+                        //     ]
+                        // };
+                        chart.setOption(option);
+                    }
+                }
+            });
+
+        });
+        
+    </script>
+</body>
+</html>

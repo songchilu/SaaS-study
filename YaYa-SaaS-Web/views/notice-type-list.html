@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        /* 弹出层圆角 */
+        .layui-layer{
+            border-radius: 10px;
+        }
+        /* 单选框颜色 */
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        /* 表格头部样式 */
+        .layui-table-tool .layui-table-tool-temp{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            padding-right:unset;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="padding: 10px 0;">
+                <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">名称</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="noticeTypeName" placeholder="消息类型名称" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
+            <!-- 表格显示 -->
+            <table class="layui-hide" id="table-notice-type" lay-filter="table-notice-type"></table>
+        </div>
+    </div>
+    <!-- 表格单元格:删除-更新-添加 权限控制 -->
+    <script id="ID-type-unit-tpl" type="text/html">
+        {{# if(is_super || hasPermission('notice-type-edit')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="edit"><i style="font-size: 12px;margin-right: 2px;" class="iconfont icon-CRMEB-tianxie"></i> 编辑</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('notice-type-del')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+        {{# } }}
+    </script>
+    <!-- 顶部添加权限控制 -->
+    <script id="ID-notice-type-top-tpl" type="text/html">
+        {{# if(is_super || hasPermission('notice-type-add')){ }}
+        <button type="button" lay-event="notice-type-add" class="yaya-btn is-plain-primary" style="margin-right: 5px;"><i class="iconfont icon-CRMEB-jia"></i>新增</button>
+        {{# } }}
+    </script>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const table = layui.table;
+            const layer = layui.layer;
+            
+            //单元格工具栏事件
+            table.on('tool(table-notice-type)', function(obj){
+                //console.log(obj);
+                //事件
+                let event = obj.event;
+                if(event==='del'){ //删除事件
+                    layer.confirm('确定删除吗？', function(index){
+                        layer.close(index);//关闭弹窗
+                        // 向后端发送删除请求，执行完毕后，可通过 reloadData 方法完成数据重载
+                        let noticeTypeId = obj.data.noticeTypeId;
+                        $.ajax({
+                            url: server_url+'/deleteSysNoticeType',
+                            type:'POST',
+                            dataType:'json',
+                            headers:{
+                                'Authorization': token
+                            },
+                            data:{noticeTypeId:noticeTypeId},
+                            success: function(resp){
+                                if(resp.code===0){
+                                    //刷新
+                                    table.reload('table-notice-type');
+                                }else{
+                                    layer.msg(resp.msg)
+                                }
+                            }
+                        });
+                    });
+                }else if(event==='edit'){ //编辑事件
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        area: ['450px', '180px'],
+                        title: '编辑',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: `notice-type-edit.html`,
+                        end: function(){
+                            //刷新表格
+                            table.reload('table-notice-type');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="noticeTypeId"]').val(obj.data.noticeTypeId);
+                            body.find('input[name="noticeTypeName"]').val(obj.data.noticeTypeName);
+                        }
+                    });
+                }else{
+                    layer.msg("功能还在路上,敬请期待~");
+                }
+
+            });
+
+            // 头部工具栏事件
+            table.on('toolbar(table-notice-type)', function(obj){
+                switch(obj.event){
+                    case 'notice-type-add':
+                        layer.open({
+                            type: 2, // page 层类型 iframe
+                            area: ['400px', '180px'],
+                            title: '添加',
+                            shade: 0.6, // 遮罩透明度
+                            shadeClose: true, // 点击遮罩区域，关闭弹层
+                            content: 'notice-type-add.html',
+                            end: function(){
+                                //刷新表格
+                                table.reload('table-notice-type');
+                            }
+                        });
+                    break;
+                    default:
+                        layer.msg("功能在路上");
+                }
+            });
+
+            //搜索
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                // 执行搜索重载
+                table.reload('table-notice-type', {
+                    page: {
+                        curr: 1, // 重新从第 1 页开始
+                        prev:'上一页',
+                        next:'下一页',
+                        limit:10,
+                        limits:[10,20,30,40,50],
+                        theme:'#409eff'
+                    },
+                    where: field // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+            //表格渲染
+            table.render({
+                elem: '#table-notice-type',
+                url: server_url+'/getSysNoticeTypePage',
+                method:'POST',
+                headers:{
+                    'Authorization':token
+                },
+                toolbar:'#ID-notice-type-top-tpl',
+                defaultToolbar:[], //表格头部右侧工具栏,隐藏
+                skin:'line',
+                height:'full',
+                parseData: function(res){
+                    return {
+                        "code" : res.code,
+                        "msg"  : res.msg,
+                        "data" : res.data.records,
+                        "count": res.data.total
+                    }
+                },
+                page:{
+                    prev:'上一页',
+                    next:'下一页',
+                    limit:10,
+                    limits:[10,20,30,40,50],
+                    theme:'#409eff'
+                },
+                request: {
+                    pageName: 'pageNo', // 页码的参数名称，默认：page
+                    limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
+                },
+                cols: [[
+                    {
+                        title: '#',
+                        type: 'numbers'
+                    },
+                    {
+                        field:'noticeTypeName',
+                        title: '类型名'
+                    },
+                    {
+                        title: '创建人',
+                        templet: function(d){
+                            return d.createUser?d.createUser.nickname:'';
+                        }
+                    },
+                    {
+                        field:'createTime',
+                        title: '创建时间'
+                    },
+                    {
+                        field:'updateTime',
+                        title: '更新时间'
+                    },
+                    {
+                        title: '操作',
+                        fixed: 'right',
+                        templet: '#ID-type-unit-tpl'
+                    }
+                ]]
+            });
+        })
+    </script>
+</body>
+</html>

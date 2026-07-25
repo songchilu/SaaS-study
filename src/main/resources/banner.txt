@@ -1,0 +1,26 @@
+${AnsiColor.BRIGHT_MAGENTA}
+YaYa-SaaS-Plus版本              :  ${spring.application.version}
+Jdk版本                         :  ${java.version}
+SpringBoot版本                  :  ${spring-boot.version}
+模型名称                         :  ${spring.ai.deepseek.chat.model}
+我的BLOG                        :  https://hs-an-yue.github.io
+Author                         :  夜泊1990
+Email                          :  hd1611756908@163.com
+YaYa开源前端模板(Gitee)           :  https://gitee.com/ukoko/yaya-layui-admin-plus
+YaYa开源前端模板(GitHub)          :  https://github.com/hs-an-yue/yaya-layui-admin-plus
+YaYa-SaaS-Plus SaaS系统(GitEE)  :  https://gitee.com/ukoko/ya-ya-saa-s-plus
+${AnsiColor.BRIGHT_GREEN}
+------------YaYa-SaaS-Plus-适配YaYa-LayUI-Admin-Plus前端模板的极简SaaS系统------------
+ __   __  __   __         ____              ____        ____  _
+ \ \ / /_ \ \ / /_ _     / ___|  __ _  __ _/ ___|      |  _ \| |_   _ ___
+  \ V / _` \ V / _` |____\___ \ / _` |/ _` \___ \ _____| |_) | | | | / __|
+   | | (_| || | (_| |_____|__) | (_| | (_| |___) |_____|  __/| | |_| \__ \
+   |_|\__,_||_|\__,_|    |____/ \__,_|\__,_|____/      |_|   |_|\__,_|___/
+
+------------YaYa-SaaS-Plus-适配YaYa-LayUI-Admin-Plus前端模板的极简SaaS系统------------
+Spring      : https://start.spring.io/
+Banner      : https://tooltt.com/art-ascii/
+Cron        : https://cron.ciding.cc/
+ico转换      : https://convertio.co/zh/
+画布         : https://www.suxieban.com/
+${AnsiColor.DEFAULT}

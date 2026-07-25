@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <title>个人中心</title>
+    <style>
+        .user-base{
+            width: 100%;
+            background-color: #fff;
+        }
+        .user-base>div{
+            width: 100%;
+        }
+        .user-base>hr{
+            width: 100%;
+        }
+        .user-info{
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .user-info>p{
+            margin-top: 15px;
+        }
+        .user-info-list>img{
+            height: 100px;
+            width: 100px;
+            border-radius: 50px;
+            border: 1px solid #eeeeee;
+            margin: 20px 0;
+        }
+        .user-info-list{
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            align-items: center;
+            padding-top: 15px;
+        }
+        .user-info-detail{
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+        .user-info-detail-item{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            align-items: center;
+            height: 30px;
+        }
+        .user-info-detail-item>p{
+            font-size: 14px;
+        }
+        .layui-tabs-header .layui-this, .layui-tabs-header li:hover{
+            color: #16b777;
+        }
+        .layui-tabs-header .layui-this:after{
+            border-bottom: 3px solid #16b777;
+        }
+        /*头像*/
+        .avatar-container {
+            text-align: center;
+        }
+        .avatar-wrapper {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid rgba(221, 221, 221, 0.16);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+            margin: 0 auto;
+        }
+        .avatar-wrapper:hover {
+            transform: scale(1.05);
+        }
+        .avatar {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .upload-text {
+            margin-top: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+        .user-edit-info>div>div:hover{
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+<div class="yaya-container">
+    <div class="layui-fluid">
+        <div class="layui-row layui-col-space20">
+            <div class="layui-col-md3 card-hover">
+                <div class="user-base user-info">
+                    <div class="user-info-list">
+                        <div class="avatar-container">
+                            <div class="avatar-wrapper" id="avatar-upload">
+                                <img id="avatarImg" src="../image/avatar.gif" alt="头像" class="avatar">
+                            </div>
+                            <p class="upload-text">点击头像上传新头像</p>
+                        </div>
+                        <div id="user-info-detail" class="user-info-detail">
+                            <!-- 用户信息显示位置 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md9 card-hover">
+                <div class="user-base layui-panel">
+                    <!--标题-->
+                    <div style="margin: 10px 0 0 10px">
+                        <h4 style="color:#000000D9;">安全设置</h4>
+                    </div>
+                    <hr>
+                    <div class="user-edit-info">
+                        <div style="width: 96%;margin: 0 auto;padding-bottom: 20px;">
+                            <!-- 用户信息 -->
+                            <div style="display: flex;padding: 15px 10px;border-radius: 5px;">
+                                <div style="width: 40px;height: 40px;display: flex;justify-content: center;align-items: center;background-color: #ecf2ff;border-radius: 4px;">
+                                    <i style="font-size: 20px;color: #4080FF;cursor: pointer;" class="iconfont icon-CRMEB-yuangong-xianxing"></i>
+                                </div>
+                                <div style="margin-left: 10px;flex:1;height: 40px;display: flex;">
+                                    <div style="width: 50%;height: 40px;">
+                                        <!-- 上层 -->
+                                        <div style="height: 20px;font-size: 14px;color: #000;">用户信息</div>
+                                        <!--下层  -->
+                                        <div style="height: 20px;font-size: 13px;color: #909399;">修改名称和性别</div>
+                                    </div>
+                                    <div style="width: 50%;height: 40px;display: flex;align-items: center;justify-content: flex-end;">
+                                        <button id="user-edit-btn" class="yaya-btn is-link-primary" type="button">修改</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <!-- 账户密码 -->
+                            <div style="display: flex;padding: 15px 10px;border-radius: 5px;">
+                                <div style="width: 40px;height: 40px;display: flex;justify-content: center;align-items: center;background-color: #ffecfb;border-radius: 4px;">
+                                    <i style="font-size: 20px;color: #ff4291;cursor: pointer;" class="iconfont icon-CRMEB-anquanweihu-xianxing"></i>
+                                </div>
+                                <div style="margin-left: 10px;flex:1;height: 40px;display: flex;">
+                                    <div style="width: 50%;height: 40px;">
+                                        <!-- 上层 -->
+                                        <div style="height: 20px;font-size: 14px;color: #000;">账户密码</div>
+                                        <!--下层  -->
+                                        <div style="height: 20px;font-size: 13px;color: #909399;">定期修改密码有助于保护账户安全</div>
+                                    </div>
+                                    <div style="width: 50%;height: 40px;display: flex;align-items: center;justify-content: flex-end;">
+                                        <button id="password-edit-btn" class="yaya-btn is-link-primary" type="button">修改</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="ID-user-tpl" type="text/html">
+    <hr>
+    <!--用户账号-->
+    <div class="user-info-detail-item">
+        <p>账号</p>
+        <p>{{= d.username}}</p>
+    </div>
+    <hr>
+    <!--用户名字-->
+    <div class="user-info-detail-item">
+        <p>名字</p>
+        <p>{{= d.nickname}}</p>
+    </div>
+    <hr>
+    <!-- 用户性别 -->
+    <div class="user-info-detail-item">
+        <p>性别</p>
+        <p>{{= d.sex==0?'女':d.sex==1?'男':'保密'}}</p>
+    </div>
+    <hr>
+    <!--用户部门-->
+    <div class="user-info-detail-item">
+        <p>部门</p>
+        <p>{{= d.department.deptName}}</p>
+    </div>
+    <hr>
+    <!--用户角色-->
+    <div class="user-info-detail-item">
+        <p>角色</p>
+        <p>{{= d.role.roleName}}</p>
+    </div>
+    <hr>
+    <!--用户岗位-->
+    {{# if (d.posts && Object.keys(d.posts).length>0) { }}
+    <div class="user-info-detail-item">
+        <p>岗位</p>
+        <p>{{= d.posts.map(item => item.postName).join(',')}}</p>
+    </div>
+    <hr>
+    {{# } }}
+    <!--过期时间-->
+    <div class="user-info-detail-item">
+        <p>过期时间</p>
+        <p>{{= d.expiredTime}}</p>
+    </div>
+    <hr>
+</script>
+<script src="../layui/layui.js"></script>
+<script src="../js/server.js"></script>
+<script>
+    layui.use(function(){
+        const $ = layui.$;
+        const upload = layui.upload;
+        const laytpl = layui.laytpl;
+        const layer = layui.layer;
+
+
+        //头像渲染(上传组件头像显示)
+        $("#avatarImg")[0].src = file_url+'/'+user.avatar;
+
+        /**
+         * 用户信息显示渲染 laytpl模板引擎使用
+         */
+        let template = document.getElementById('ID-user-tpl').innerHTML;//模板
+        let target = document.getElementById('user-info-detail'); // 输出结果的目标元素
+        //渲染
+        laytpl(template).render(user, function(html) {
+            target.innerHTML = html;
+        });
+
+
+        //头像上传
+        upload.render({
+            elem: '#avatar-upload',
+            url: server_url+'/uploadImage',
+            headers: {Authorization: token},
+            done: function(response){
+                console.log(response)
+                //上传成功
+                if(response.code===0){
+                    //更新页面显示
+                    $("#avatarImg")[0].src=file_url+'/'+response.data.image_url;
+                    //更新头像
+                    $.ajax({
+                        type:'post',
+                        url: server_url+'/updateSysUserAvatar',
+                        headers:{
+                            'Authorization': token
+                        },
+                        data:{"userId":userId,"avatar":response.data.image_url},
+                        dataType:'json',
+                        success:function(resp){
+                            if(resp.code!==0){
+                                layer.msg(resp.msg);
+                            }else{
+                                //刷新头像 - 本地头像刷新
+                                user.avatar=response.data.image_url;
+                                console.log("修改后：",user);
+                                layui.data('yaya', {
+                                    key:'user',
+                                    value:user
+                                });
+                                //刷新外框
+                                window.parent.location.reload();
+                            }
+                        }
+                    });
+                }else{
+                    //失败提示
+                    layer.msg(response.msg);
+                }
+            }
+        });
+
+
+
+
+
+
+        /**
+         * 修改密码
+         */
+        $("#password-edit-btn").click(function(){
+            layer.open({
+                type: 2, // page 层类型 iframe
+                area: ['350px', '300px'],
+                title: '修改密码',
+                offset:'20px',
+                shade: 0.6, // 遮罩透明度
+                shadeClose: true, // 点击遮罩区域，关闭弹层
+                content: 'personal-pwd-edit.html',
+                end: function(){
+                    //刷新
+                    window.parent.location.reload();
+                },
+                success:function(layero,index){
+                    //更新弹出层表单数据进行回显
+                    let body = layer.getChildFrame("body",index);
+                    body.find("input[name='userId']").val(user.userId);
+                }
+            });
+        });
+
+
+        /**
+         * 修改用户基本信息
+         */
+        $("#user-edit-btn").click(function(){
+            layer.open({
+                type: 2, // page 层类型 iframe
+                area: ['400px', '340px'],
+                title: '用户信息',
+                offset:'20px',
+                shade: 0.6, // 遮罩透明度
+                shadeClose: true, // 点击遮罩区域，关闭弹层
+                content: 'personal-user-edit.html?sex='+user.sex,
+                end: function(){
+                    //刷新
+                    window.parent.location.reload();
+                },
+                success:function(layero,index){
+                    //更新弹出层表单数据进行回显
+                    let body = layer.getChildFrame("body",index);
+                    body.find("input[name='userId']").val(user.userId);
+                    body.find("input[name='nickname']").val(user.nickname);
+                    body.find("input[name='phone']").val(user.phone);
+                    body.find("input[name='email']").val(user.email);
+                }
+            });
+        });
+
+
+    
+    });
+</script>
+</body>
+</html>

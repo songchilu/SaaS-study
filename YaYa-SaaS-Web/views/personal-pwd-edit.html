@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        .layui-form-label{
+            width: 35px;
+        }
+        .layui-input-block{
+            margin-left:65px;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="layui-container" style="margin-top: 20px;">
+            <form class="layui-form">
+                <input type="hidden" name="userId">
+                <div class="layui-form-item">
+                    <div class="layui-input-wrap">
+                        <div class="layui-input-prefix">
+                            <i class="layui-icon layui-icon-password"></i>
+                        </div>
+                        <input type="password" name="oldPassword"  placeholder="原密码" class="layui-input" lay-verify="required" lay-reqtext="请输入原密码" lay-affix="eye">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-wrap">
+                        <div class="layui-input-prefix">
+                            <i class="layui-icon layui-icon-vercode"></i>
+                        </div>
+                        <input type="password" name="newPassword"  placeholder="新密码 英文+数字组成,长度至少6位" lay-verify="required" lay-reqtext="请输入新密码" class="layui-input" lay-affix="eye">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-wrap">
+                        <div class="layui-input-prefix">
+                            <i class="layui-icon layui-icon-vercode"></i>
+                        </div>
+                        <input type="password" name="repeatPassword"  placeholder="重复密码 英文+数字组成,长度至少6位" lay-verify="required" lay-reqtext="重复输入新密码" class="layui-input" lay-affix="eye">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <button class="layui-btn layui-btn-normal layui-btn-radius layui-btn-fluid" lay-submit lay-filter="person-password-edit">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            let $ = layui.$;
+            let form = layui.form;
+            
+            //地址参数
+            let url = layui.url();
+            //参数
+            let search =  url.search;
+            //性别
+            let sex = search.sex;
+            //表单性别回显
+            let sex_str='';
+            if(sex==1){
+                sex_str+=`
+                    <input type="radio" name="sex" value="1" title="男" checked>
+                    <input type="radio" name="sex" value="0" title="女"> 
+                    <input type="radio" name="sex" value="2" title="保密">
+                `;
+            }else if(sex==0){
+                sex_str+=`
+                    <input type="radio" name="sex" value="1" title="男">
+                    <input type="radio" name="sex" value="0" title="女" checked> 
+                    <input type="radio" name="sex" value="2" title="保密">
+                `;
+            }else if(sex==2){
+                sex_str+=`
+                    <input type="radio" name="sex" value="1" title="男">
+                    <input type="radio" name="sex" value="0" title="女"> 
+                    <input type="radio" name="sex" value="2" title="保密" checked>
+                `;
+            }
+            //设置到指定位置
+            $("#sex").html(sex_str);
+            //刷新
+            form.render('radio');
+
+
+            /**
+             * 更新密码
+             */
+            form.on('submit(person-password-edit)', function(data){
+                let field = data.field; // 获取表单字段值
+                //console.log(field);
+                if(field.repeatPassword!==field.newPassword){
+                    layer.msg("新密码两次输入不相同");
+                }else{
+                    //提交数据
+                    $.ajax({
+                        url: server_url+'/changeSysUserPassword',
+                        method: 'POST',
+                        data: field,
+                        headers: {Authorization: token},
+                        dataType: 'json',
+                        success: function(response) {
+                            //console.log(response);
+                            if(response.code===0){
+                                //删除用户登录信息
+                                layui.data("yaya",null);
+                                //关闭弹窗
+                                let index = parent.layer.getFrameIndex(window.name); // 先得到当前 iframe 层的索引
+                                parent.layer.close(index); // 再执行关闭
+                            }else{
+                                layer.msg(response.msg);
+                            }
+                        },
+                        error: function(xhr, status, error) {     // (可选) 请求失败后的回调
+                            layer.msg(error);
+                        }
+                    });
+                }
+                return false; // 阻止默认 form 跳转
+            });
+
+
+
+        });
+    </script>
+</body>
+</html>

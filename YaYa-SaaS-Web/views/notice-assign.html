@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        /* 弹出层圆角 */
+        .layui-layer{
+            border-radius: 10px;
+        }
+        /* 单选框颜色 */
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        .layui-form-label{
+            width: unset;
+        }
+        .layui-input-block{
+            margin-left: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel" style="height: 300px;">
+            <form class="layui-form" style="margin-top: 10px;height: 300px;">
+                <input type="hidden" name="noticeId">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">部门</label>
+                    <div class="layui-input-block">
+                        <!-- 部门列表 -->
+                        <div id="deptId"></div>
+                    </div>
+                </div>
+                <div class="layui-form-item" style="position: fixed;left: 0;bottom: 0;margin-left: 3vw;">
+                    <button type="button" class="yaya-btn yaya-primary" style="width: 94vw;" lay-submit lay-filter="assign">分配</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/xm-select.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const layer = layui.layer;
+
+            //地址
+            let url = layui.url();
+            //参数
+            let search = url.search;
+            //消息iD
+            let noticeId = search.noticeId;
+
+            //提交岗位
+            form.on('submit(assign)', function(data){
+                let field = data.field; // 获取表单字段值
+                //AJAX请求
+                $.ajax({
+                    type:'post',
+                    url: server_url+'/addSysNoticeUser',
+                    headers:{
+                        'Authorization': token
+                    },
+                    data:field,
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                            //关闭弹窗
+                            let index = parent.layer.getFrameIndex(window.name); // 先得到当前 iframe 层的索引
+                            parent.layer.close(index); // 再执行关闭
+                        }else{
+                            layer.msg(response.msg);
+                        }
+                    }
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+        
+            //部门列表
+            $.ajax({
+                type:'POST',
+                url: server_url+'/getSysDepartmentTree',
+                headers:{
+                    'Authorization': token
+                },
+                contentType:'application/json',
+                dataType:'json',
+                success:function(response){
+                    if(response.code===0){
+                        let list = response.data;
+                        if(list && list.length>0){
+                            var dept = xmSelect.render({
+                                el: '#deptId',
+                                model: {
+                                    label: {
+                                        type: 'block',
+                                        block: {
+                                            //最大显示数量, 0:不限制
+                                            showCount: 1,
+                                            //是否显示删除图标
+                                            showIcon: true,
+                                        }
+                                    }
+                                }, 
+                                data: list,
+                                height:'200px',
+                                name:'deptIds',
+                                theme: {
+                                    color: '#409eff',
+                                },
+                                prop: {
+                                    name: 'deptName',
+                                    value: 'deptId',
+                                },
+                                tree:{
+                                    //是否显示树状结构
+                                    show: true,
+                                    //是否展示三角图标
+                                    showFolderIcon: true,
+                                    //是否显示虚线
+                                    showLine: false,
+                                    //间距
+                                    indent: 20,
+                                    //是否严格遵守父子模式，false：选中父即只有父被选中,选中子只有子被选中
+                                    strict: true,
+                                    //默认展开节点
+                                    expandedKeys: true
+                                }
+                            })
+                            //部门回显
+                            //查询已发送的部门ID列表
+                            $.ajax({
+                                type:'POST',
+                                url: server_url+'/getDeptIdsByNoticeId',
+                                headers:{
+                                    'Authorization': token
+                                },
+                                data:{noticeId:noticeId},
+                                dataType:'json',
+                                success:function(response){
+                                    let data =  response.data;
+                                    if(data && data.length>0){
+                                        dept.setValue(data);
+                                    }
+                                }
+                            });
+                        }
+                    }else{
+                        layer.msg(response.msg);
+                    }
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

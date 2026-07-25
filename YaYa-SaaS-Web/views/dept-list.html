@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        .layui-layer{
+            border-radius: 10px;
+        }
+        .layui-table-tool .layui-table-tool-temp{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            padding-right:unset;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="padding: 10px 0;">
+                <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">名称</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="deptName" placeholder="部门名称" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
+            <!-- 表格显示 -->
+            <table class="layui-hide" id="treeTable-dept" lay-filter="treeTable-dept"></table>
+        </div>
+    </div>
+    <!-- 表格单元格:删除-更新-添加 权限控制 -->
+    <script id="ID-dept-unit-tpl" type="text/html">
+        {{# if(is_super || hasPermission('dept-add')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="add"><i class="layui-icon layui-icon-add-1"></i> 新增</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('dept-edit')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="edit"><i style="font-size: 12px;margin-right: 3px;" class="iconfont icon-CRMEB-tianxie"></i> 编辑</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('dept-del')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+        {{# } }}
+    </script>
+    <!-- 顶部添加权限控制 -->
+    <script id="ID-dept-top-tpl" type="text/html">
+        <button lay-event="foldup-id" type="button" class="yaya-btn yaya-default" style="margin-right: 10px;">收起</button>
+        <button lay-event="expand-id" type="button" class="yaya-btn yaya-default" style="margin-right: 10px;">展开</button>
+        {{# if(is_super || hasPermission('dept-add')){ }}
+        <button lay-event="add-dept" type="button" class="yaya-btn yaya-primary"><i class="layui-icon layui-icon-add-1"></i> 添加</button>
+        {{# } }}
+    </script>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const treeTable = layui.treeTable;
+            const layer = layui.layer;
+            const laytpl = layui.laytpl;
+
+
+            //表格表头事件
+            treeTable.on('toolbar(treeTable-dept)', function(obj){
+                console.log(obj);
+                switch(obj.event){
+                    case 'add-dept':
+                        layer.open({
+                            type: 2, // page 层类型 iframe
+                            offset:'5px',
+                            area: ['450px', '350px'],
+                            title: '添加',
+                            shade: 0.6, // 遮罩透明度
+                            shadeClose: true, // 点击遮罩区域，关闭弹层
+                            content: 'dept-add.html',
+                            end: function(){
+                                //刷新表格
+                                treeTable.reload('treeTable-dept');
+                            }
+                        });
+                    break;
+                    case 'expand-id':
+                        treeTable.expandAll('treeTable-dept', true);
+                    break; 
+                    case 'foldup-id':
+                        treeTable.expandAll('treeTable-dept', false);
+                    break; 
+                }
+            });
+
+
+            //搜索渲染
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                // 执行搜索重载
+                treeTable.reload('treeTable-dept', {
+                    where: field // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+
+            //单元格工具事件(一般用于进行编辑和删除操作)
+            treeTable.on('tool(treeTable-dept)', function(obj){
+                //事件
+                let event = obj.event;
+                if(event==='del'){    //删除事件
+                    layer.confirm('确定删除吗？', function(index){
+                        // 向后端发送删除请求，执行完毕后，可通过 reloadData 方法完成数据重载
+                        let deptId = obj.data.deptId;
+                        $.ajax({
+                            url: server_url+'/deleteSysDepartment',
+                            type:'POST',
+                            dataType:'json',
+                            contentType:'application/json',
+                            headers:{
+                                'Authorization': token
+                            },
+                            data:JSON.stringify([deptId]),
+                            success: function(response){
+                                if(response.code===0){
+                                    obj.del(); // 删除对应行（tr）的 DOM 结构
+                                    layer.close(index);//关闭弹窗
+                                    treeTable.reloadData('treeTable-dept', {
+                                        scrollPos: 'fixed'  // 保持滚动条位置不变 - v2.7.3 新增
+                                    });
+                                }else{
+                                    layer.msg(response.msg)
+                                }
+                            }
+                        });
+                    });
+                }else if(event==='edit'){//编辑事件
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        area: ['450px', '350px'],
+                        title: '编辑',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: `dept-edit.html?status=${obj.data.status}`,
+                        end: function(){
+                            //刷新表格
+                            treeTable.reload('treeTable-dept');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="deptId"]').val(obj.data.deptId);
+                            body.find('input[name="parentId"]').val(obj.data.parentId);
+                            body.find('input[name="deptName"]').val(obj.data.deptName);
+                            body.find('input[name="deptCode"]').val(obj.data.deptCode);
+                            body.find('input[name="sort"]').val(obj.data.sort);
+                        }
+                    });
+                }else if(event==='add'){//添加事件
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                         offset:'5px',
+                        area: ['450px', '350px'],
+                        title: '添加',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: 'dept-add.html',
+                        end: function(){
+                            //刷新表格
+                            treeTable.reload('treeTable-dept');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="parentId"]').val(obj.data.deptId);
+                        }
+                    });
+                }else{
+                    layer.msg("功能还在路上,敬请期待~");
+                }
+            });
+
+            //表格渲染
+            treeTable.render({
+                elem: '#treeTable-dept',
+                url: server_url+'/getSysDepartmentTree',
+                method:'POST',
+                headers:{
+                    'Authorization':token
+                },
+                skin:'line',
+                height:'full',
+                toolbar:'#ID-dept-top-tpl',
+                defaultToolbar:[],
+                parseData: function(response){
+                    return {
+                        "code": response.code,
+                        "msg": response.msg,
+                        "data":response.data
+                    }
+                },
+                tree:{
+                    customName:{
+                        name:'deptName',
+                        id:'deptId',
+                        pid:'parentId'
+                    },
+                    view:{
+                        // 菜单是否展开
+                        expandAllDefault:false
+                    }
+                },
+                cols: [[
+                    {
+                        type: 'numbers',title:'#',fixed: 'left'
+                    },
+                    {
+                        field:'deptName',
+                        width:'20%',
+                        title: '部门名称'
+                    },
+                    {
+                        field:'deptCode',
+                        width:'13%',
+                        title: '部门编号'
+                    },
+                    {
+                        field:'sort',
+                        width:'10%',
+                        title: '排序'
+                    },
+                    {
+                        title: '状态',
+                        width:'10%',
+                        templet: function(d){
+                            let status = d.status;
+                            if(status===1){
+                                return `<span class="yaya-tag yaya-tag-light-success tag-small">正常</span>`;
+                            }else{
+                                return `<span class="yaya-tag yaya-tag-light-danger tag-small">停用</span>`;
+                            }
+                        }
+                    },
+                    {
+                        field:'createTime',
+                        width:'13%',
+                        title: '创建时间'
+                    },
+                    {
+                        field:'updateTime',
+                        width:'13%',
+                        title: '更新时间'
+                    },
+                    {
+                        width:180,
+                        title: '操作',
+                        fixed: 'right',
+                        templet: '#ID-dept-unit-tpl'
+                    }
+                ]]
+            });
+        });
+    </script>
+</body>
+</html>

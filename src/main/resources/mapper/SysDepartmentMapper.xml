@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yaya.mapper.SysDepartmentMapper">
+
+    <select id="getTopDepartmentByDeptId" resultType="com.yaya.entity.SysDepartment">
+        SELECT
+            dept_id,
+            dept_name,
+            dept_code,
+            parent_id,
+            tree_path,
+            `sort`,
+            `status`,
+            `is_deleted`,
+            `create_id`,
+            `update_id`,
+            create_time,
+            update_time
+        FROM
+            sys_department
+        WHERE
+            dept_id = (
+                SELECT
+                    CASE
+                        WHEN
+                        parent_id = 0 THEN dept_id
+                        ELSE CAST( SUBSTRING_INDEX( SUBSTRING_INDEX( tree_path, ',', 2 ), ',', - 1 ) AS UNSIGNED )
+                    END AS dept_id
+                FROM
+                sys_department
+                WHERE
+                dept_id = #{deptId}
+            )
+    </select>
+    
+    <select id="getDepartmentAndSubDepartmentList" resultType="com.yaya.entity.SysDepartment">
+        SELECT
+            *
+        FROM
+            sys_department
+        <where>
+            is_deleted = 0
+            <if test="status!=null">
+                AND `status` = #{status}
+            </if>
+            <if test="deptId!=null">
+                AND ( dept_id = #{deptId} OR FIND_IN_SET( #{deptId},tree_path ))
+            </if>
+        </where>
+    </select>
+    
+    <select id="getFullDeptNamePathByDeptId" resultType="string" parameterType="long">
+        SELECT
+            GROUP_CONCAT( d.dept_name ORDER BY FIND_IN_SET( d.dept_id, CONCAT( t.tree_path, ',', t.dept_id ) ) SEPARATOR '/' ) AS full_path
+        FROM
+            sys_department t
+            JOIN sys_department d ON FIND_IN_SET( d.dept_id, CONCAT( t.tree_path, ',', t.dept_id ) )
+        WHERE
+            t.dept_id = #{deptId}
+    </select>
+</mapper>

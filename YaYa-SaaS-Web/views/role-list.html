@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        .layui-layer{
+            border-radius: 10px;
+        }
+        .layui-table-tool .layui-table-tool-temp{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            padding-right:unset;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="padding: 10px 0;">
+                <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">名称</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="roleName" placeholder="角色名称" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">租户</label>
+                        <div class="yaya-input-block">
+                            <select name="deptId">
+                                <!-- 租户列表 -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
+            <!-- 表格显示 -->
+            <table class="layui-hide" id="table-role" lay-filter="table-role"></table>
+        </div>
+    </div>
+    <!-- 表格单元格:删除-更新-添加 权限控制 -->
+    <script id="ID-role-unit-tpl" type="text/html">
+        {{# if(is_super || hasPermission('role-auth')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="auth-menu"><i style="font-size: 12px;margin-right: 2px;" class="layui-icon layui-icon-auz"></i> 菜单授权</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('role-edit')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="edit"><i style="font-size: 12px;margin-right: 2px;" class="iconfont icon-CRMEB-tianxie"></i> 编辑</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('role-del')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+        {{# } }}
+    </script>
+    <!-- 顶部添加权限控制 -->
+    <script id="ID-role-top-tpl" type="text/html">
+        {{# if(is_super || hasPermission('role-add')){ }}
+        <button lay-event="role-add" type="button" class="yaya-btn yaya-primary"><i class="layui-icon layui-icon-add-1"></i> 添加</button>     
+        {{# } }}
+    </script>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const table = layui.table;
+            const layer = layui.layer;
+            const laytpl = layui.laytpl;
+
+
+            //单元格工具事件(一般用于进行编辑和删除操作)
+            table.on('tool(table-role)', function(obj){
+                //事件
+                let event = obj.event;
+                if(event==='del'){ //删除事件
+                    layer.confirm('确定删除吗？', function(index){
+                        layer.close(index);//关闭弹窗
+                        // 向后端发送删除请求，执行完毕后，可通过 reloadData 方法完成数据重载
+                        let roleId = obj.data.roleId;
+                        $.ajax({
+                            url: server_url+'/deleteSysRole',
+                            type:'POST',
+                            contentType:'application/json',
+                            dataType:'json',
+                            headers:{
+                                'Authorization': token
+                            },
+                            data:JSON.stringify([roleId]),
+                            success: function(resp){
+                                if(resp.code===0){
+                                    //刷新
+                                    table.reload('table-role');
+                                }else{
+                                    layer.msg(resp.msg)
+                                }
+                            }
+                        });
+                    });
+                }else if(event==='edit'){ //编辑事件
+                    //处理如果选择自定义部门数据,需要对自定义部门进行回显
+                    let deptIdStr='';
+                    let sysRoleDeptList = obj.data.sysRoleDeptList;
+                    if(sysRoleDeptList && sysRoleDeptList.length>0){
+                        //获取里面的部门id,并将其转成字符串类型,以逗号分割
+                        deptIdStr = sysRoleDeptList.map(item=> item.deptId).join(",");
+                    }
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        offset: '10px',
+                        area: ['410px', '450px'],
+                        title: '编辑',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: `role-edit.html?roleType=${obj.data.roleType}&status=${obj.data.status}&dataScope=${obj.data.dataScope}&deptIdStr=${deptIdStr}&deptId=${obj.data.deptId}`,
+                        end: function(){
+                            //刷新表格
+                            table.reload('table-role');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="roleId"]').val(obj.data.roleId);
+                            body.find('input[name="roleName"]').val(obj.data.roleName);
+                            body.find('input[name="roleCode"]').val(obj.data.roleCode);
+                        }
+                    });
+                }else if(event==='auth-menu'){ //菜单授权事件
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        offset: '10px',
+                        area: ['400px', '450px'],
+                        title: '菜单授权',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: `role-auth.html?roleId=${obj.data.roleId}`,
+                        end: function(){
+                            //刷新表格
+                            table.reload('table-role');
+                        }
+                    });
+                }else{
+                    layer.msg("功能还在路上,敬请期待~");
+                }
+            });
+
+
+            //顶部表头事件
+            table.on('toolbar(table-role)', function(obj){
+                console.log(obj);
+                switch(obj.event){
+                    case 'role-add':
+                        layer.open({
+                            type: 2, // page 层类型 iframe
+                            offset: '10px',
+                            area: ['500px', '450px'],
+                            title: '添加',
+                            shade: 0.6, // 遮罩透明度
+                            shadeClose: true, // 点击遮罩区域，关闭弹层
+                            content: 'role-add.html',
+                            end: function(){
+                                //刷新表格
+                                table.reload('table-role');
+                            }
+                        });
+                    break;    
+                }
+            });
+
+            //搜索
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                // 执行搜索重载
+                table.reload('table-role', {
+                    page: {
+                        curr: 1, // 重新从第 1 页开始
+                        prev:'上一页',
+                        next:'下一页',
+                        limit:10,
+                        limits:[10,20,30,40,50],
+                        theme:'#409eff'
+                    },
+                    where: field // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+
+            //部门列表(租户列表)
+            $.ajax({
+                type:'POST',
+                url: server_url+'/getOneLevelSysDepartment',
+                headers:{
+                    'Authorization': token
+                },
+                contentType:'application/json',
+                dataType:'json',
+                success:function(response){
+                    if(response.code===0){
+                        let list = response.data;
+                        let str='<option value="">请选择租户</option>';
+                        if(list && list.length>0){
+                            for (let index = 0; index < list.length; index++) {
+                                str+=`
+                                    <option value="${list[index].deptId}">${list[index].deptName}</option>
+                                `;
+                            }
+                        }
+                        //设置到指定位置
+                        $('select[name="deptId"]').html(str);
+                        //重新渲染
+                        form.render("select");
+                    }else{
+                        layer.msg(response.msg);
+                    }
+                }
+            });
+
+            //表格渲染
+            table.render({
+                elem: '#table-role',
+                url: server_url+'/getSysRolePage',
+                method:'POST',
+                headers:{
+                    'Authorization':token
+                },
+                skin:'line',
+                height:'full',
+                toolbar:'#ID-role-top-tpl',
+                defaultToolbar:[],
+                parseData: function(res){
+                    return {
+                        "code" : res.code,
+                        "msg"  : res.msg,
+                        "data" : res.data.records,
+                        "count": res.data.total
+                    }
+                },
+                page:{
+                    prev:'上一页',
+                    next:'下一页',
+                    limit:10,
+                    limits:[10,20,30,40,50],
+                    theme:'#409eff'
+                },
+                request: {
+                    pageName: 'pageNo', // 页码的参数名称，默认：page
+                    limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
+                },
+                cols: [[
+                    {
+                        title: '#',
+                        type: 'numbers'
+                    },
+                    {
+                        field:'roleName',
+                        title: '角色名'
+                    },
+                    {
+                        field:'roleCode',
+                        title:'角色编号',
+                        width:200
+                    },
+                    {
+                        title: '租户',
+                        templet: function(d){
+                            return d.sysDepartment?d.sysDepartment.deptName:'';
+                        }
+                    },
+                    {
+                        title:'状态',
+                        templet: function(d){
+                            return d.status==1? `<span class="yaya-tag yaya-tag-light-success tag-small">正常</span>`:`<span class="yaya-tag yaya-tag-light-danger tag-small">停用</span>`;
+                        }
+                    },
+                    {
+                        title:'角色类型',
+                        templet: function(d){
+                            return d.roleType==1? `<span class="yaya-tag yaya-tag yaya-tag-light-primary tag-small">管理角色</span>`:`<span class="yaya-tag yaya-tag-light-warning tag-small">普通角色</span>`;
+                        }
+                    },
+                    {
+                        field:'createTime',
+                        width:200,
+                        title: '创建时间'
+                    },
+                    {
+                        width:200,
+                        title: '操作',
+                        fixed: 'right',
+                        templet: '#ID-role-unit-tpl'
+                    }
+                ]]
+            })
+        });
+    </script>
+</body>
+</html>

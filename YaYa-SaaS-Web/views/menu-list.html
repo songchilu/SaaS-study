@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        .layui-layer{
+            border-radius: 10px;
+        }
+        .layui-table-tool .layui-table-tool-temp{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            padding-right:unset;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="padding: 10px 0;">
+                <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">名称</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="menuTitle" placeholder="菜单名称" autocomplete="off" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
+            <!-- 表格显示 -->
+            <table class="layui-hide" id="treeTable-menu" lay-filter="treeTable-menu"></table>
+        </div>
+    </div>
+    <!-- 表格单元格:删除-更新-添加 权限控制 -->
+    <script id="ID-menu-unit-tpl" type="text/html">
+        {{# if(is_super || hasPermission('menu-add')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="add"><i class="layui-icon layui-icon-add-1"></i> 新增</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('menu-edit')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="edit"><i style="font-size: 12px;margin-right: 3px;" class="iconfont icon-CRMEB-tianxie"></i> 编辑</button>
+        {{# } }}
+        {{# if(is_super || hasPermission('menu-del')){ }}
+        <button class="yaya-btn is-link-primary yaya-btn-small" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+        {{# } }}
+    </script>
+    <!-- 顶部添加权限控制 -->
+    <script id="ID-menu-top-tpl" type="text/html">
+        <button lay-event="foldup-id" type="button" class="yaya-btn yaya-default" style="margin-right: 10px;">收起</button>
+        <button lay-event="expand-id" type="button" class="yaya-btn yaya-default" style="margin-right: 10px;">展开</button>
+        {{# if(is_super || hasPermission('menu-add')){ }}
+        <button lay-event="add-menu" type="button" class="yaya-btn yaya-primary"><i class="layui-icon layui-icon-add-1"></i> 添加</button>
+        {{# } }}
+    </script>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const treeTable = layui.treeTable;
+            const layer = layui.layer;
+            const laytpl = layui.laytpl;
+
+
+            treeTable.on('toolbar(treeTable-menu)', function(obj){
+                console.log(obj);
+                switch(obj.event){
+                    case 'add-menu':
+                        layer.open({
+                            type: 2, // page 层类型 iframe
+                            offset:'5px',
+                            area: ['500px', '450px'],
+                            title: '添加',
+                            shade: 0.6, // 遮罩透明度
+                            shadeClose: true, // 点击遮罩区域，关闭弹层
+                            content: 'menu-add.html',
+                            end: function(){
+                                //刷新表格
+                                treeTable.reload('treeTable-menu');
+                            }
+                        });
+                    break;
+                    case 'expand-id':
+                        treeTable.expandAll('treeTable-menu', true);
+                    break; 
+                    case 'foldup-id':
+                        treeTable.expandAll('treeTable-menu', false);
+                    break; 
+                }
+            });
+
+
+            //搜索渲染
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                // 执行搜索重载
+                treeTable.reload('treeTable-menu', {
+                    where: field // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+
+            //单元格工具事件(一般用于进行编辑和删除操作)
+            treeTable.on('tool(treeTable-menu)', function(obj){
+                //事件
+                let event = obj.event;
+                if(event==='del'){    //删除事件
+                    layer.confirm('确定删除吗？', function(index){
+                        // 向后端发送删除请求，执行完毕后，可通过 reloadData 方法完成数据重载
+                        let menuId = obj.data.menuId;
+                        //开启加载图标
+                        let index_ = layer.load(0);
+                        $.ajax({
+                            url: server_url+'/deleteMenu',
+                            type:'POST',
+                            dataType:'json',
+                            headers:{
+                                'Authorization': token
+                            },
+                            data:{menuId:menuId},
+                            success: function(response){
+                                //关闭加载图标
+                                layer.close(index_);
+                                if(response.code===0){
+                                    obj.del(); // 删除对应行（tr）的 DOM 结构
+                                    layer.close(index);//关闭弹窗
+                                    treeTable.reloadData('treeTable-menu', {
+                                        scrollPos: 'fixed'  // 保持滚动条位置不变 - v2.7.3 新增
+                                    });
+                                }else{
+                                    layer.msg(response.msg)
+                                }
+                            }
+                        });
+                    });
+                }else if(event==='edit'){//编辑事件
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        area: ['500px', '450px'],
+                        title: '编辑',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: `menu-edit.html?menuType=${obj.data.menuType}&menuIcon=${obj.data.menuIcon}`,
+                        end: function(){
+                            //刷新表格
+                            treeTable.reload('treeTable-menu');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="menuId"]').val(obj.data.menuId);
+                            body.find('input[name="parentId"]').val(obj.data.parentId);
+                            body.find('input[name="menuTitle"]').val(obj.data.menuTitle);
+                            body.find('input[name="sort"]').val(obj.data.sort);
+                            body.find('input[name="menuIcon"]').val(obj.data.menuIcon);
+                            body.find('input[name="menuUrl"]').val(obj.data.menuUrl);
+                            body.find('input[name="perms"]').val(obj.data.perms);
+                        }
+                    });
+                }else if(event==='add'){//添加事件
+                    layer.open({
+                        type: 2, // page 层类型 iframe
+                        area: ['500px', '450px'],
+                        title: '添加',
+                        shade: 0.6, // 遮罩透明度
+                        shadeClose: true, // 点击遮罩区域，关闭弹层
+                        content: 'menu-add.html',
+                        end: function(){
+                            //刷新表格
+                            treeTable.reload('treeTable-menu');
+                        },
+                        success: function(layero, index){
+                            let body = layer.getChildFrame('body', index);
+                            // 给 iframe 页中的某个输入框赋值
+                            body.find('input[name="parentId"]').val(obj.data.menuId);
+                        }
+                    });
+                }else{
+                    layer.msg("功能还在路上,敬请期待~");
+                }
+            });
+
+            //表格渲染
+            treeTable.render({
+                elem: '#treeTable-menu',
+                url: server_url+'/getMenuTree',
+                method:'POST',
+                headers:{
+                    'Authorization':token
+                },
+                skin:'line',
+                height:'full',
+                toolbar:'#ID-menu-top-tpl',
+                defaultToolbar:[],
+                parseData: function(response){
+                    return {
+                        "code": response.code,
+                        "msg": response.msg,
+                        "data":response.data
+                    }
+                },
+                tree:{
+                    customName:{
+                        name:'menuTitle',
+                        id:'menuId',
+                        pid:'parentId',
+                        icon:'menuIcon'
+                    },
+                    view:{
+                        // 菜单是否展开
+                        expandAllDefault:false
+                    }
+                },
+                cols: [[
+                    {
+                        type: 'numbers',title:'#',fixed: 'left'
+                    },
+                    {
+                        field:'menuTitle',
+                        width:'20%',
+                        title: '菜单名称'
+                    },
+                    {
+                        title: '菜单类型',
+                        width:'10%',
+                        templet: function(d){
+                            let menuType = d.menuType;
+                            if(menuType===1){
+                                return '<span class="yaya-tag yaya-tag-light-warning tag-small">目录</span>';
+                            }else if(menuType===2){
+                                return '<span class="yaya-tag yaya-tag-light-success tag-small">菜单</span>';
+                            }else{
+                                return '<span class="yaya-tag yaya-tag-light-danger tag-small">按钮</span>';
+                            }
+                        }
+                    },
+                    {
+                        title: '图标',
+                        width:'10%',
+                        templet: function(d){
+                            return `<i class='${d.menuIcon}'></i>`;
+                        }
+                    },
+                    {
+                        field:'perms',
+                        width:'13%',
+                        title: '权限标识'
+                    },
+                    {
+                        field:'sort',
+                        width:'10%',
+                        title: '排序'
+                    },
+                    {
+                        title: '状态',
+                        width:'10%',
+                        templet: function(d){
+                            let status = d.status;
+                            if(status===1){
+                                return `<span class="yaya-tag yaya-tag-light-success tag-small">正常</span>`;
+                            }else{
+                                return `<span class="yaya-tag yaya-tag-light-danger tag-small">停用</span>`;
+                            }
+                        }
+                    },
+                    {
+                        field:'createTime',
+                        width:'13%',
+                        title: '创建时间'
+                    },
+                    {
+                        field:'updateTime',
+                        width:'13%',
+                        title: '更新时间'
+                    },
+                    {
+                        width:180,
+                        title: '操作',
+                        fixed: 'right',
+                        templet: '#ID-menu-unit-tpl'
+                    }
+                ]]
+            });
+
+        });
+    </script>
+</body>
+</html>

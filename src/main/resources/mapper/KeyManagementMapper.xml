@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yaya.mapper.KeyManagementMapper">
+
+    <select id="getKeyManagementPage" resultType="com.yaya.entity.KeyManagement">
+        SELECT
+            m.*,
+            d.dept_name,
+            u.nickname as create_name
+        FROM
+            key_management m,
+            sys_department d,
+            sys_user u
+        <where>
+            d.dept_id = m.dept_id
+            AND m.create_id=u.user_id
+            <if test="deptName!=null and deptName!=''">
+                AND d.dept_name LIKE CONCAT( '%', #{deptName}, '%' )
+            </if>
+            <if test="deptId!=null">
+                AND m.dept_id=#{deptId}
+            </if>
+        </where>
+    </select>
+    
+</mapper>

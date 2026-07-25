@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        .layui-form-label{
+            width: 35px;
+        }
+        .layui-input-block{
+            margin-left:65px;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="layui-container" style="margin-top: 20px;">
+            <form class="layui-form">
+                <input type="hidden" name="userId">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">昵称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="nickname"  placeholder="请输入昵称" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="phone"  placeholder="请输入手机" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">邮箱</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email"  placeholder="请输入邮箱" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">性别</label>
+                    <div class="layui-input-block" id="sex">
+                        <!-- 性别 -->
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <button class="layui-btn layui-btn-normal layui-btn-radius layui-btn-fluid" lay-submit lay-filter="person-user-edit">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            let $ = layui.$;
+            let form = layui.form;
+            
+            //地址参数
+            let url = layui.url();
+            //参数
+            let search =  url.search;
+            //性别
+            let sex = search.sex;
+            //表单性别回显
+            let sex_str='';
+            if(sex==1){
+                sex_str+=`
+                    <input type="radio" name="sex" value="1" title="男" checked>
+                    <input type="radio" name="sex" value="0" title="女"> 
+                    <input type="radio" name="sex" value="2" title="保密">
+                `;
+            }else if(sex==0){
+                sex_str+=`
+                    <input type="radio" name="sex" value="1" title="男">
+                    <input type="radio" name="sex" value="0" title="女" checked> 
+                    <input type="radio" name="sex" value="2" title="保密">
+                `;
+            }else if(sex==2){
+                sex_str+=`
+                    <input type="radio" name="sex" value="1" title="男">
+                    <input type="radio" name="sex" value="0" title="女"> 
+                    <input type="radio" name="sex" value="2" title="保密" checked>
+                `;
+            }
+            //设置到指定位置
+            $("#sex").html(sex_str);
+            //刷新
+            form.render('radio');
+
+
+            /**
+             * 更新用户
+             */
+            form.on('submit(person-user-edit)', function(data){
+                let field = data.field; // 获取表单字段值
+                //提交数据
+                $.ajax({
+                    url: server_url+'/updateSysUser',
+                    method: 'POST',
+                    data: JSON.stringify(field),
+                    contentType:'application/json',
+                    headers: {Authorization: token},
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log(response);
+                        if(response.code===0){
+                            //刷新头像 - 本地头像刷新
+                            user.nickname=field.nickname;
+                            user.phone=field.phone;
+                            user.email=field.email;
+                            user.sex=field.sex;
+                            layui.data('yaya', {
+                                key:'user',
+                                value:user
+                            });
+                            //关闭弹窗
+                            let index = parent.layer.getFrameIndex(window.name); // 先得到当前 iframe 层的索引
+                            parent.layer.close(index); // 再执行关闭
+                        }else{
+                            layer.msg(response.msg);
+                        }
+                    },
+                    error: function(xhr, status, error) {     // (可选) 请求失败后的回调
+                        layer.msg(error);
+                    }
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+
+
+        });
+    </script>
+</body>
+</html>

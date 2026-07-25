@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        .layui-layer{
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel" style="height: 399.5px;">
+            <!-- 树状菜单 -->
+             <div id="ID-tree-menu" style="padding-bottom: 40px;"></div>
+            <!-- 提交按钮 -->
+            <button id="authMenu" type="button" style="width: 350px;position: fixed;bottom: 5px;" class="yaya-btn yaya-primary" >授权</button>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const layer = layui.layer;
+            const tree = layui.tree;
+
+            //获取当前页面地址对象
+            let url = layui.url();
+            //获取参数
+            let roleId = url.search.roleId;
+
+            //部门列表+回显
+            $.ajax({
+                type:'POST',
+                url: server_url+'/getAuthMenuIdsByRoleId',
+                headers:{
+                    'Authorization': token
+                },
+                data:{roleId:roleId},
+                dataType:'json',
+                success:function(resp){
+                    if(resp.code===0){
+                        let data = resp.data;
+                        $.ajax({
+                            type:'POST',
+                            url: server_url+'/getMenuTree',
+                            headers:{
+                                'Authorization': token
+                            },
+                            dataType:'json',
+                            success:function(response){
+                                if(response.code===0){
+                                    let list = response.data;
+                                    if(list && list.length>0){
+                                        //生成树状菜单
+                                        tree.render({
+                                            elem: '#ID-tree-menu',
+                                            data: list,
+                                            showCheckbox: true,
+                                            onlyIconControl: true,
+                                            // 给树状菜单设置属性id为menu-id
+                                            id: 'menu-id', 
+                                            customName:{
+                                                id:'menuId',
+                                                title:'menuTitle',
+                                                children: 'children'
+                                            }
+                                        });
+                                        //回显
+                                        tree.setChecked('menu-id', data);
+                                    }
+                                }else{
+                                    layer.msg(response.msg);
+                                }
+                            }
+                        });
+
+                    }else{
+                        layer.msg(resp.msg);
+                    }
+                }
+            });
+            
+
+
+
+            //菜单数据提交
+            $("#authMenu").click(function(){
+                //获取选中数据
+                let checkData = tree.getChecked('menu-id');
+                let ids = getAllMenuIds(checkData);
+                console.log(checkData);
+                console.log(ids);
+                $.ajax({
+                    type:'post',
+                    url:server_url+'/addOrUpdateAuthMenu',
+                    headers:{
+                        'Authorization': token
+                    },
+                    data:{
+                        roleId:roleId,
+                        menuIds:ids.join(",")
+                    },
+                    dataType:'json',
+                    success:function(resp){
+                        if(resp.code===0){
+                            //关闭弹窗
+                            let index = parent.layer.getFrameIndex(window.name); // 先得到当前 iframe 层的索引
+                            parent.layer.close(index); // 再执行关闭
+                        }else{
+                            layer.msg(resp.msg);
+                        }
+                    }
+                });
+            });
+
+            //递归获取选中菜单中的菜单ID列表
+            function getAllMenuIds(menus) {
+                let ids = [];
+                function traverse(menuList) {
+                    for (const menu of menuList) {
+                        ids.push(menu.menuId);
+                        if (menu.children && menu.children.length > 0) {
+                            traverse(menu.children);
+                        }
+                    }
+                }
+                traverse(menus);
+                return ids;
+            }
+        });
+    </script>
+</body>
+</html>

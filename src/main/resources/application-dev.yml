@@ -1,0 +1,48 @@
+# 自定义配置
+yaya:
+  local-url: d:/yaya-saas-plus            # SpringBoot的静态资源保存的位置,例如图片视频音频其它文件等
+  log-url: d:/yaya-saas-plus/log          # 日志的保存路径
+  captcha-timeout: 60                     # 验证码过期时间,单位为秒 默认60秒
+  token-timeout: 43200                    # 访问令牌过期时间,单位分钟 默认30天
+  captcha-length: 4                       # 验证码生成的内容数量,不设置默认为4个
+  captcha-circle-count: 2                 # 验证码干扰线生成数量
+  captcha-width: 120                      # 验证码生成的高度,默认值120
+  captcha-height: 40                      # 验证码生成的宽度,默认值40
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/yaya-saas-plus?characterEncoding=utf-8&useUnicode=true&useSSL=true&serverTimezone=GMT%2B8&allowMultiQueries=true
+    username: root
+    password: root
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, classpath:/public/,file:${yaya.local-url}/  # 配置静态资源位置,通过服务器地址可以访问此目录下的资源
+  data:
+    redis:
+      host: 127.0.0.1 # Redis地址
+      port: 6379      # 端口
+      database: 0     # 使用的数据库
+      password:       # 密码（无密码留空）
+      timeout: 10000  # 超时时间
+      lettuce:
+        pool:
+          max-active: 8 # 最大连接数
+          max-idle: 8   # 最大空闲连接连接
+          min-idle: 2   # 最小空闲连接数  min-idle 推荐 = max-active 的 20% ~ 50%  低并发:（后台、管理系统）→ 0~1 中等并发:（Web 服务、接口一般）→ 2（最常用） 高并发:（秒杀、首页、高频接口）→ 4~8
+          max-wait: 1000ms # 获取连接超时时间
+  ai:
+    deepseek:
+      api-key: sk-f09bd838d9784353ab8d742105a2c005
+      base-url: https://api.deepseek.com
+      chat:
+        model: deepseek-v4-pro
+server:
+  port: 8080 #服务器端口号
+  forward-headers-strategy: native # 开启后，Spring 会自动解析 X-Forwarded-For 头，并重写 request.getRemoteAddr()
+mybatis-plus:
+  type-aliases-package: com.yaya.entity # 类型别名
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true # 数据库列命名和Java属性名自动驼峰映射,但是需要保证数据库列的命名方式为: AAA_BBB_CCC JAVA属性命名为 aaaBbbCcc
+    cache-enabled: true # 开启二级缓存
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #打印SQL

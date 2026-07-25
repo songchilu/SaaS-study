@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yaya.mapper.SysNoticeUserMapper">
+    <select id="getMySysNoticePage" resultType="com.yaya.model.resp.SysNoticeResp">
+        SELECT
+            sn.notice_id,
+            sn.notice_title,
+            sn.is_top,
+            sn.notice_level,
+            sn.notice_content,
+            sn.create_time,
+            nu.is_read,
+            nu.read_time,
+            d.dept_name,
+            snt.notice_type_name
+        FROM
+            sys_notice_user nu,sys_notice sn,sys_notice_type snt,sys_department d
+        <where>
+            nu.notice_id=sn.notice_id
+            AND sn.notice_type_id=snt.notice_type_id
+            AND sn.dept_id=d.dept_id
+            AND nu.user_id = #{userId}
+            <if test="noticeTitle!=null and noticeTitle!=''">
+                AND sn.notice_title LIKE CONCAT('%',#{noticeTitle},'%')
+            </if>
+            <if test="isRead!=null">
+                AND nu.is_read=#{isRead}
+            </if>
+        </where>
+    </select>
+    
+    <select id="getMySysNoticeByNoticeId" resultType="com.yaya.model.resp.SysNoticeResp">
+        SELECT
+            sn.notice_id,
+            sn.notice_title,
+            sn.is_top,
+            sn.notice_level,
+            sn.notice_content,
+            sn.create_time,
+            nu.is_read,
+            d.dept_name,
+            snt.notice_type_name
+        FROM
+        sys_notice_user nu,sys_notice sn,sys_notice_type snt,sys_department d
+        <where>
+            nu.notice_id=sn.notice_id
+            AND sn.notice_type_id=snt.notice_type_id
+            AND sn.dept_id=d.dept_id
+            AND sn.notice_id = #{noticeId}
+            AND nu.user_id = #{userId}
+        </where>
+    </select>
+</mapper>

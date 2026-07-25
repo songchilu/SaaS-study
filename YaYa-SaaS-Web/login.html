@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <!-- 标签icon设置 -->
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <title>YaYa - 登录</title>
+    <style>
+        /* --- 基础样式重置 --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { height: 100%; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+            "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #a5d6ff, #e0f0ff);
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 20px 60px;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* --- 主容器布局 --- */
+        .container {
+            display: flex;
+            max-width: 1100px;
+            width: 100%;
+            min-height: 560px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(100, 150, 255, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* --- 左侧 AI 视觉区域 --- */
+        .left-panel {
+            flex: 1;
+            padding: 50px 40px;
+            min-height: 560px;
+            background: linear-gradient(180deg, #f0f8ff, #e0f0ff);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .ai-cube {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(145deg, #4a9eff, #1e7eff);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 25px 60px rgba(30, 126, 255, 0.5);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .ai-logo { font-size: 70px; font-weight: 900; color: white; text-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .title { margin-top: 30px; font-size: 26px; font-weight: 700; color: #1e3a8a; }
+        .subtitle { color: #64748b; margin-top: 12px; line-height: 1.6; font-size: 16px; }
+
+        /* --- 右侧登录操作区域 --- */
+        .right-panel {
+            width: 450px;
+            flex-shrink: 0;
+            min-height: 560px;
+            padding: 40px 40px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs { display: flex; border-bottom: 2px solid #f1f5f9; margin-bottom: 20px; }
+        .tab {
+            flex: 1; padding: 12px 0; text-align: center; font-size: 16px; cursor: pointer;
+            transition: all 0.3s; color: #94a3b8; position: relative;
+        }
+        .tab.active { color: #1e7eff; font-weight: 600; }
+        .tab.active::after {
+            content: ""; position: absolute; bottom: -2px; left: 20%; width: 60%; height: 3px;
+            background: #1e7eff; border-radius: 3px;
+        }
+
+        .tab-content-wrapper { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .tab-content { display: none; width: 100%; flex: 1 1 auto; }
+        .fade-in-active { display: flex; flex-direction: column; width: 100%; flex: 1 1 auto; animation: fadeInUp 0.5s ease forwards; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 表单样式 --- */
+        .form-group { margin-bottom: 16px; }
+        label.input-label { display: block; margin-bottom: 8px; color: #64748b; font-size: 14px; }
+        input[type="text"], input[type="password"] {
+            padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;
+            width: 100%; outline: none; transition: all 0.3s; font-size: 15px;
+            box-sizing: border-box;
+        }
+        input:focus { border-color: #1e7eff; box-shadow: 0 0 0 4px rgba(30, 126, 255, 0.1); }
+
+        .login-btn {
+            width: 100%; padding: 16px;
+            background: linear-gradient(90deg, #1e7eff, #3b9eff);
+            color: white; border: none; border-radius: 12px;
+            font-size: 17px; font-weight: 600; cursor: pointer;
+            margin-top: 10px; transition: all 0.3s;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(30, 126, 255, 0.3); }
+
+        /* --- 扫码区域 --- */
+        .qrcode-container { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .qrcode-box {
+            position: relative; width: 180px; height: 180px; padding: 10px;
+            border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; margin-bottom: 15px;
+        }
+        .qrcode-box img { width: 100%; height: 100%; }
+
+        /* --- 新设计的协议区域 (Agreement Section) --- */
+        .footer-agreement {
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background-color: #f8fafc;
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+
+        .footer-agreement:hover { background-color: #f1f5f9; }
+
+        /* 自定义复选框容器 */
+        .checkbox-wrapper {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0; /* 防止复选框被挤压 */
+            margin-top: 2px;
+        }
+
+        /* 隐藏原生 Checkbox */
+        .checkbox-wrapper input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0; width: 0;
+        }
+
+        /* 自定义美化的 Checkmark */
+        .checkmark {
+            position: absolute;
+            top: 0; left: 0;
+            height: 18px; width: 18px;
+            background-color: #fff;
+            border: 2px solid #cbd5e1;
+            border-radius: 5px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 悬停效果 */
+        .checkbox-wrapper:hover input ~ .checkmark { border-color: #1e7eff; }
+
+        /* 选中状态 */
+        .checkbox-wrapper input:checked ~ .checkmark {
+            background-color: #1e7eff;
+            border-color: #1e7eff;
+        }
+
+        /* 选中后的打勾图标 */
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 5px; top: 1px;
+            width: 5px; height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-wrapper input:checked ~ .checkmark:after { display: block; }
+
+        /* 文本排版 */
+        .agreement-text {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.5;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .agreement-text a {
+            color: #1e7eff;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 2px;
+            border-bottom: 1.5px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .agreement-text a:hover {
+            border-bottom-color: #1e7eff;
+            opacity: 0.8;
+        }
+
+        /* --- 底部软著信息 --- */
+        .copyright {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            padding: 0 20px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .copyright a {
+            color: #94a3b8;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .copyright a:hover { color: #1e7eff; }
+
+        /* --- 响应式适配 --- */
+        @media (max-width: 900px) {
+            body {
+                display: block !important;
+                min-height: 100vh !important;
+                padding: 15px 10px 30px !important;
+            }
+            .container {
+                display: block !important;
+                flex-direction: initial !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                min-height: 0 !important;
+                border-radius: 16px !important;
+                box-shadow: 0 15px 40px rgba(100, 150, 255, 0.25) !important;
+            }
+            .left-panel {
+                display: block !important;
+                width: 100% !important;
+                min-height: 0 !important;
+                padding: 25px 20px !important;
+                flex: none !important;
+            }
+            .ai-cube {
+                width: 70px !important;
+                height: 70px !important;
+                border-radius: 24px !important;
+                margin: 0 auto !important;
+            }
+            .ai-logo { font-size: 36px !important; }
+            .title {
+                display: block !important;
+                font-size: 20px !important;
+                margin-top: 14px !important;
+                text-align: center !important;
+            }
+            .subtitle {
+                display: block !important;
+                font-size: 13px !important;
+                margin-top: 8px !important;
+                text-align: center !important;
+            }
+            .right-panel {
+                display: block !important;
+                width: 100% !important;
+                min-height: 0 !important;
+                padding: 20px 18px !important;
+                flex: none !important;
+                flex-shrink: 1 !important;
+            }
+            .tabs { margin-bottom: 14px !important; display: flex !important; }
+            .tab { padding: 10px 0 !important; font-size: 15px !important; }
+            .tab-content-wrapper {
+                display: block !important;
+                flex: none !important;
+                min-height: 0 !important;
+            }
+            .tab-content { display: none !important; width: 100% !important; flex: none !important; }
+            .fade-in-active { display: block !important; width: 100% !important; animation: fadeInUp 0.5s ease forwards !important; }
+            .form-group { margin-bottom: 14px !important; }
+            label.input-label { display: block !important; margin-bottom: 6px !important; }
+            input[type="text"], input[type="password"] { padding: 12px 14px !important; font-size: 14px !important; }
+            .qrcode-container { display: block !important; text-align: center !important; padding: 15px 0 !important; }
+            .qrcode-box { width: 160px !important; height: 160px !important; margin: 0 auto 10px !important; }
+            .login-btn { padding: 14px !important; font-size: 15px !important; margin-top: 8px !important; }
+            .footer-agreement {
+                display: flex !important;
+                margin-top: 14px !important;
+                padding: 10px !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+            }
+            .checkbox-wrapper { margin-top: 0 !important; }
+            .agreement-text { font-size: 12px !important; line-height: 1.5 !important; }
+            .copyright {
+                position: static !important;
+                display: block !important;
+                margin-top: 12px !important;
+                padding: 8px 10px !important;
+                font-size: 11px !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+            }
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        .layui-input-affix{
+            line-height: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-panel">
+        <div class="ai-cube"><div class="ai-logo">YA</div></div>
+        <div class="title">极简SaaS</div>
+        <div class="subtitle">集成智能AI助手<br>让复杂工作变得简单高效</div>
+    </div>
+
+    <div class="right-panel">
+        <div class="tabs">
+            <div class="tab active" data-tab="1">账号登录</div>
+            <div class="tab" data-tab="3">APP扫码</div>
+        </div>
+
+        <div class="tab-content-wrapper">
+            <form id="tab1" class="layui-form tab-content fade-in-active">
+                <div class="form-group">
+                    <label class="input-label">账号</label>
+                    <input type="text" name="username" value="root" placeholder="请输入账号" lay-verify="required" lay-reqtext="请输入账号" lay-affix="clear">
+                </div>
+                <div class="form-group">
+                    <label class="input-label">密码</label>
+                    <input type="password" name="password" value="123456" placeholder="请输入密码" lay-verify="required" lay-reqtext="请输入密码" lay-affix="eye">
+                </div>
+                <div class="form-group">
+                    <label class="input-label">验证码</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" name="captcha" placeholder="请输入验证码" style="flex: 1;" lay-verify="required" lay-reqtext="请输入验证码" lay-affix="clear">
+                        <img id="captcha" src="image/captcha.gif" alt="验证码" style="height: 48px; border-radius: 12px; cursor: pointer;" title="点击刷新">
+                    </div>
+                </div>
+                <input type="hidden" name="uuid" id="uuid">
+                <button class="login-btn" lay-submit lay-filter="login">立即登录</button>
+            </form>
+
+            <div id="tab3" class="tab-content">
+                <div class="qrcode-container">
+                    <div class="qrcode-box">
+                        <img src="image/qr-code.png" alt="QR">
+                    </div>
+                    <div class="qrcode-desc">请使用 <span>YaYa 助手 App</span> 扫码</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-agreement">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="agreeCheck" checked>
+                <span class="checkmark"></span>
+            </label>
+            <div class="agreement-text" onclick="document.getElementById('agreeCheck').click()">
+                我已阅读并完全同意
+                <a href="#">《用户服务协议》</a>
+                与
+                <a href="#">《隐私政策条款》</a>
+                并授权该平台获取相关必要信息。
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="copyright">
+    Copyright &copy; 2026 YaYa 版权所有 &nbsp;|&nbsp;
+    <a href="#">牛ICP备2026000xxx号</a> &nbsp;|&nbsp;
+    <a href="#">公🐂网🐶备 32000000000000号</a><br>
+    软件著作权登记号：2026SR00xyz🚀
+</div>
+<script src="layui/layui.js"></script>
+<script src="js/server.js"></script>
+<script>
+    layui.use(function (){
+        let form = layui.form;
+        let layer = layui.layer;
+        let $ = layui.$;
+
+
+        //如果已经登录过，并且token有效,直接跳转到首页
+        if(token && token.length>0){
+            $.ajax({
+                type: 'post',
+                url: server_url+'/checkToken',
+                headers:{
+                    Authorization:token
+                },
+                dataType: 'json', // 预期服务器返回的数据类型
+                success: function(response) {
+                    //console.log(response);
+                    //状态码
+                    let code = response.code;
+                    //提示消息
+                    let msg = response.msg;
+                    if(code===0){
+                        location.href="index.html";   
+                    }
+                },
+                error: function(xhr, status, error) {
+                    //清空
+                    layui.data("yaya",null);
+                    location.href="login.html";
+                }
+            });
+        }
+
+        // 提交事件
+        form.on('submit(login)', function(data){
+            //开启加载图标
+            let index = layer.load(0);
+            let field = data.field; // 获取表单字段值
+            //提交数据
+            $.ajax({
+                url: server_url+'/login',
+                method: 'POST',
+                data: field,
+                dataType: 'json',
+                success: function(response) {
+                    
+                    //关闭加载图标
+                    layer.close(index);
+
+                    //状态码
+                    let code = response.code;
+                    //提示消息
+                    let msg = response.msg;
+                    if(code===0){
+                        let data = response.data;
+                        console.log(data);
+                        //将登录成功的信息保存到本地存储
+                        layui.data('yaya',{
+                            key: 'token',
+                            value: data.token
+                        });
+                        layui.data('yaya',{
+                            key: 'user',
+                            value: data.user
+                        });
+                        layui.data('yaya',{
+                            key: 'perm',
+                            value: data.perm
+                        });
+                        //跳转到首页
+                        location.href="index.html";
+                    }else{
+                        layer.msg(msg);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if(xhr.status==500){
+                        layer.msg("服务器开小差.请稍后重试");
+                    }else{
+                        console.log(xhr)
+                        layer.msg(errorThrown);
+                    }
+                }
+            });
+            return false; // 阻止默认 form 跳转
+        });
+
+        //调用生成验证码的函数
+        generalCaptcha();
+
+        /**
+         * 生成验证码
+         */
+        function generalCaptcha(){
+            //开启加载图标
+            let index = layer.load(0);
+            $.ajax({
+                type: 'post',
+                url: server_url+'/captchaImage',
+                dataType: 'json', // 预期服务器返回的数据类型
+                success: function(response) {
+                    //关闭加载图标
+                    layer.close(index);
+                    //状态码
+                    let code = response.code;
+                    //提示消息
+                    let msg = response.msg;
+                    if(code===0){
+                        //验证码显示
+                        $("#captcha")[0].src=response.data.img;
+                        //赋uuid
+                        $("#uuid").val(response.data.uuid);
+                    }else{
+                        layer.msg(msg);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if(xhr.status==500){
+                        layer.msg("服务器开小差.请稍后重试");
+                    }else{
+                        console.log(xhr)
+                        layer.msg(errorThrown);
+                    }
+                }
+            });
+        }
+
+        /**
+         * 刷新验证码
+         */
+        $("#captcha").click(function(){
+            generalCaptcha();
+        });
+      
+
+        // 选项卡切换逻辑
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                if (this.classList.contains('active')) return;
+                const targetId = 'tab' + this.getAttribute('data-tab');
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('fade-in-active');
+                    content.style.display = 'none';
+                });
+                const target = document.getElementById(targetId);
+                target.style.display = 'block';
+                void target.offsetWidth;
+                target.classList.add('fade-in-active');
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

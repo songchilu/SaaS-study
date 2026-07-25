@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        .layui-layer{
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="margin-top: 10px; padding: 0 10px;">
+                <input type="hidden"  name="deptId">
+                <input type="hidden" value="0" name="parentId">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">部门名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="deptName" lay-verify="required" lay-reqtext="请输入部门名称" lay-affix="clear" placeholder="请输入部门名称"  class="layui-input yaya-input-border-radius">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">部门编号</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="deptCode" lay-verify="required" lay-reqtext="请输入部门编号" lay-affix="clear" placeholder="请输入部门编号"  class="layui-input yaya-input-border-radius">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-block" id="status">
+                        <!-- 状态 -->
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">排序</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="sort" lay-verify="required" lay-reqtext="请输入序号" lay-affix="clear" placeholder="请输入序号"  class="layui-input yaya-input-border-radius">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <button type="button" class="layui-btn layui-btn-normal layui-btn-radius layui-btn-fluid" lay-submit lay-filter="edit">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+
+            const $ = layui.$;
+            const form = layui.form;
+            const layer = layui.layer;
+
+            //地址
+            let url = layui.url();
+            //参数
+            let search = url.search;
+            //状态
+            let status = search.status;
+            let str='';
+            if(status==1){//正常
+                str+=`
+                    <input type="radio" name="status" value="1" title="正常" checked>
+                    <input type="radio" name="status" value="0" title="禁用">
+                `;
+            }else{ //禁用
+                str+=`
+                    <input type="radio" name="status" value="1" title="正常">
+                    <input type="radio" name="status" value="0" title="禁用" checked>
+                `;
+            }
+            $("#status").html(str);
+            //刷新
+            form.render('radio');
+
+            //提交部门
+            form.on('submit(edit)', function(data){
+                let field = data.field; // 获取表单字段值
+                //参数json化
+                let params = JSON.stringify(field);
+                //AJAX请求
+                $.ajax({
+                    type:'post',
+                    url: server_url+'/updateSysDepartment',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    data:params,
+                    dataType:'json',
+                    success:function(response){
+                        if(response.code===0){
+                            //关闭弹窗
+                            let index = parent.layer.getFrameIndex(window.name); // 先得到当前 iframe 层的索引
+                            parent.layer.close(index); // 再执行关闭
+                        }else{
+                            layer.msg(response.msg);
+                        }
+                    }
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: yaya-saas-plus # 应用名称,自定义
+    version: @project.version@ # 取自pom.xml下project标签下的version子标签值
+  profiles:
+    active: dev # 多环境选择
+  servlet:
+    multipart:
+      max-file-size: 100MB     # 文件上传单个文件约束
+      max-request-size: 512MB # 文件上传总文件大小约束
+management:
+  server:
+    port: 8989 # 健康检查配置独立的访问端口号,和业务端口号分开
+  endpoints:
+    jmx:
+      exposure:
+        include: health #开启健康检查功能,开启存活探针和就绪探针,如果项目部署到K8S上,需要这两个探针信息,并且K8S探针端口号为容器内端口号(8989)
+# 完整健康检查: http://127.0.0.1:8989/actuator/health
+# 存活探针:    http://127.0.0.1:8989/actuator/health/liveness
+# 就绪探针:    http://127.0.0.1:8989/actuator/health/readiness

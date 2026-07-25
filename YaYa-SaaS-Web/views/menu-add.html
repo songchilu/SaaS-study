@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 引入第三方字体图标 -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>yaya-admin-plus</title>
+    <style>
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        .layui-input:focus {
+            border-color: #1476ff!important;
+            box-shadow: 0 0 0 3px rgba(22,183,119,.08)
+        }
+        .icon-item {
+            display: inline-block;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            width: 40px;
+            text-align: center;
+        }
+        .icon-item:hover {
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        .layui-form-label{
+            width: unset;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <form class="layui-form" style="margin-top: 10px; padding: 0 10px;">
+            <input type="hidden" name="parentId" value="0">
+            <div class="layui-form-item">
+                <label class="layui-form-label">名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="menuTitle" lay-verify="required" lay-reqtext="请输入菜单名" lay-affix="clear" placeholder="请输入菜单名"  class="layui-input yaya-input-border-radius">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">类型</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="menuType" value="1" title="目录" checked>
+                    <input type="radio" name="menuType" value="2" title="菜单">
+                    <input type="radio" name="menuType" value="3" title="按钮"> 
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">图标</label>
+                <!-- 隐藏用于提交参数 -->
+                <input type="hidden" name="menuIcon">
+                <div class="layui-input-block" id="iconSelectBtn" style="display: flex;align-items: center;cursor: pointer;">
+                    <!-- 图标 -->
+                    <i id="selectedIcon" class="layui-icon layui-icon-star"></i> <span style="margin-left: 10px;">选择图标</span>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">序号</label>
+                <div class="layui-input-block">
+                    <input type="text" name="sort" lay-verify="required" lay-reqtext="请输入序号" lay-affix="clear" placeholder="请输入序号"  class="layui-input yaya-input-border-radius">
+                </div>
+            </div>
+            <div class="layui-form-item menuUrl" style="display: none;">
+                <label class="layui-form-label">链接</label>
+                <div class="layui-input-block">
+                    <input type="text" name="menuUrl" placeholder="请输入链接" autocomplete="off" class="layui-input yaya-input-border-radius">
+                </div>
+            </div>
+            <div class="layui-form-item perms" style="display: none;">
+                <label class="layui-form-label">权限</label>
+                <div class="layui-input-block">
+                    <input type="text" name="perms" placeholder="请输入权限标识" autocomplete="off" class="layui-input yaya-input-border-radius">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <button type="button" class="layui-btn layui-btn-normal layui-btn-radius layui-btn-fluid" lay-submit lay-filter="add">添加</button>
+            </div>
+        </form>
+        <!-- 
+            图标位置
+        -->
+        <div id="iconList" style="display: none; padding: 10px; max-height: 300px; overflow-y: auto;">
+            <!-- 这里可以动态生成更多图标 -->
+            <div class="icon-item"><i class="layui-icon layui-icon-bot"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-leaf"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-folder"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-gitee"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-github"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-light"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-moon"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-success"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-lock"></i></div>
+            <div class="icon-item"><i class="layui-icon layui-icon-eye"></i></div>
+            <div class="icon-item"><i class="iconfont icon-yibiaopan"></i></div>
+            <div class="icon-item"><i class="iconfont icon-a-1_huaban1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-gongyezujian-yibiaopan"></i></div>
+            <div class="icon-item"><i class="iconfont icon-yibiaopan1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-zhinengmofangicon_bumenguanli"></i></div>
+            <div class="icon-item"><i class="iconfont icon-tubiao"></i></div>
+            <div class="icon-item"><i class="iconfont icon-xitongzujian"></i></div>
+            <div class="icon-item"><i class="iconfont icon-upload"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-yunying-xianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zuzhijiagou-xianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-yinliang-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-miaoshahuodong-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-APP-xianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-kucunguanli-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-yingyee-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-lianjie"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-yongquanjine-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-liebiao-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-kefuguanli-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zichantongji-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zichanguanli-xianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zichanguanli-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-mendiandingdan-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zongdingdanjine-xianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-pingtaishouxufei-xianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zichantongji-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-peisongyuanguanli-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-zhiboguanli-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-yuangong-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-qitaruku-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-biaoshi-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-shanchu1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-bianji-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-neirongzixun-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-caiwujilu-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-caiwujilu-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-shangpintuikuanjine-mianxing1"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-qiandao-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-daichuliyonghufankui-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-dinjiannzhe-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-daishenhe-mianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-dingdan-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-daituikuandingdan-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-daichuliyonghufankui-xianxing"></i></div>
+            <div class="icon-item"><i class="iconfont icon-CRMEB-tongji-xianxing1"></i></div>
+            <!-- 可继续添加更多图标 -->
+        </div> 
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const layer = layui.layer;
+            const dropdown = layui.dropdown;
+
+
+            //提交添加菜单事件
+            form.on('submit(add)', function(data){
+                let field = data.field; // 获取表单字段值
+                //参数json化
+                let params = JSON.stringify(field);
+                //AJAX请求
+                $.ajax({
+                    type:'POST',
+                    url: server_url+'/addMenu',
+                    headers:{
+                        'Authorization': token
+                    },
+                    contentType:'application/json',
+                    data:params,
+                    dataType:'json',
+                    success:function(resp){
+                        if(resp.code===0){
+                            //关闭弹窗
+                            let index = parent.layer.getFrameIndex(window.name); // 先得到当前 iframe 层的索引
+                            parent.layer.close(index); // 再执行关闭
+                        }else{
+                            layer.msg(resp.msg);
+                        }
+                    }
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+
+            //菜单添加页面-下拉图标列表生成
+            dropdown.render({
+                elem: '#iconSelectBtn', // 触发元素
+                id:'iconPandl',
+                content: document.getElementById('iconList').innerHTML, // 下拉内容
+                style: 'padding: 0; width: 280px;', // 自定义样式
+                align: 'left',
+                trigger: 'click',
+                ready: function(elemPanel) {
+                    elemPanel.find('.icon-item>.layui-icon,.icon-item>.iconfont').on('click', function(){
+                        $('input[name="menuIcon"]').val(this.className);
+                        //选中
+                        $("#iconSelectBtn").html(`<i class="${this.className}"></i>`);
+                        //关闭下拉面板
+                        dropdown.close('iconPandl');
+                    });
+                }
+            });
+
+            //菜单类型单选框事件  1:目录2:菜单3:按钮
+            form.on('radio', function(data){
+                let value = data.value;
+                if(value==='3'){//权限框显示(按钮才有权限)
+                    $(".perms").show();
+                    $(".menuUrl").hide();
+                    //清空权限和菜单
+                    $('input[name="menuUrl"]').val('');
+                    $('input[name="perms"]').val('');
+                }else if(value==='1'){//权限框隐藏和链接隐藏
+                    $(".perms").hide();
+                    $(".menuUrl").hide();
+                    //清空权限和菜单
+                    $('input[name="menuUrl"]').val('');
+                    $('input[name="perms"]').val('');
+                }else{ //链接
+                    $(".perms").hide();
+                    $(".menuUrl").show()
+                    //清空权限和菜单
+                    $('input[name="menuUrl"]').val('');
+                    $('input[name="perms"]').val('');
+                }
+                form.render();
+            });
+        });
+    </script>
+</body>
+</html>
