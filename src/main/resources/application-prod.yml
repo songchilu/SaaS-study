@@ -13,7 +13,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://106.14.27.178:3306/yaya-saas-plus?characterEncoding=utf-8&useUnicode=true&useSSL=true&serverTimezone=GMT%2B8&allowMultiQueries=true
     username: root
-    password: YLWTSMTJFYHDCMGSCWHSSYBZSDKC
+    password: xxx123
   web:
     resources:
       static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, classpath:/public/,file:${yaya.local-url}/  # 配置静态资源位置,通过服务器地址可以访问此目录下的资源
@@ -22,7 +22,7 @@ spring:
       host: 106.14.27.178 # Redis地址
       port: 6379      # 端口
       database: 0     # 使用的数据库
-      password: YLWTSMTJFYHDCMGSCWHSSYBZSDKC      # 密码
+      password: xxx123      # 密码
       timeout: 10000  # 超时时间
       lettuce:
         pool:
@@ -32,7 +32,7 @@ spring:
           max-wait: 1000ms # 获取连接超时时间
   ai:
     deepseek:
-      api-key: sk-f09bd838d9784353ab8d742105a2c005
+      api-key: sk-f09bd838d9784353ab8d742105a2c0056
       base-url: https://api.deepseek.com
       chat:
         model: deepseek-v4-pro

@@ -32,7 +32,7 @@ spring:
           max-wait: 1000ms # 获取连接超时时间
   ai:
     deepseek:
-      api-key: sk-f09bd838d9784353ab8d742105a2c005
+      api-key: sk-f09bd838d9784353ab8d742105a2c0056
       base-url: https://api.deepseek.com
       chat:
         model: deepseek-v4-pro
