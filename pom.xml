@@ -37,10 +37,10 @@
         </developer>
     </developers>
     <scm>
-        <connection>scm:git:https://gitee.com/ukoko/yaya-boot-plus.git</connection>
-        <developerConnection>scm:git:https://gitee.com/ukoko/yaya-boot-plus.git</developerConnection>
+        <connection>scm:git:https://gitee.com/ukoko/yaya-saas-plus.git</connection>
+        <developerConnection>scm:git:https://gitee.com/ukoko/yaya-saas-plus.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://gitee.com/ukoko/yaya-boot-plus</url>
+        <url>https://gitee.com/ukoko/yaya-saas-plus</url>
     </scm>
     <properties>
         <java.version>25</java.version>

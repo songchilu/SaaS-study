@@ -7,8 +7,7 @@ SpringBoot版本                  :  ${spring-boot.version}
 Author                         :  夜泊1990
 Email                          :  hd1611756908@163.com
 YaYa开源前端模板(Gitee)           :  https://gitee.com/ukoko/yaya-layui-admin-plus
-YaYa开源前端模板(GitHub)          :  https://github.com/hs-an-yue/yaya-layui-admin-plus
-YaYa-SaaS-Plus SaaS系统(GitEE)  :  https://gitee.com/ukoko/ya-ya-saa-s-plus
+YaYa-SaaS-Plus SaaS系统(GitEE)  :  https://gitee.com/ukoko/yaya-saas-plus
 ${AnsiColor.BRIGHT_GREEN}
 ------------YaYa-SaaS-Plus-适配YaYa-LayUI-Admin-Plus前端模板的极简SaaS系统------------
  __   __  __   __         ____              ____        ____  _
