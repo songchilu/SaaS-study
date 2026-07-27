@@ -141,7 +141,17 @@
                     {
                         field:'address',
                         title:'地址'
-                    }
+                    },
+                    {
+                        title:'请求参数',
+                        templet: function(d){
+                            return d.status==1? `['***','***','***']`:`${d.requestParams}`;
+                        }
+                    },
+                    {
+                        field:'errorMsg',
+                        title:'错误提示'
+                    },
                 ]]
             })
 

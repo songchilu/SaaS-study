@@ -96,4 +96,18 @@ public class DesensitizeUtils {
         }
         return ip;
     }
+
+    /**
+     * 针对通用字符串进行脱敏，字符串长度必须大于6位否则不脱敏
+     * @param str 要脱敏的字符串
+     * @return 脱敏后的结果
+     */
+    public static String desensitizeStr(String str) {
+        if (str == null || str.length() <= 6) {
+            return str;
+        }
+        // 匹配规则：开头的字符 + 中间任意字符 + 结尾的字符
+        // $1 代表留下的前半部分，$2 代表留下的后半部分
+        return str.replaceAll("^(.{2}).+(.{2})$", "$1***$2");
+    }
 }

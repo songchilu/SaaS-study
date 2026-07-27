@@ -45,4 +45,4 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true # 数据库列命名和Java属性名自动驼峰映射,但是需要保证数据库列的命名方式为: AAA_BBB_CCC JAVA属性命名为 aaaBbbCcc
     cache-enabled: true # 开启二级缓存
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #打印SQL
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #打印SQL

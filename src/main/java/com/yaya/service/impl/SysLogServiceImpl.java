@@ -1,5 +1,6 @@
 package com.yaya.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -43,6 +44,33 @@ public class SysLogServiceImpl implements SysLogService {
                     //脱敏
                     String s = DesensitizeUtils.desensitizeIp(ip_);
                     sysLog.setIp(s);
+                }
+                //账号密码脱敏
+                Integer logType_ = sysLog.getLogType();
+                if(logType_==1) {//登录日志
+                    String requestParams = sysLog.getRequestParams();
+                    if(StringUtils.isNotBlank(requestParams)) {
+                        //反序列化成json
+                        List<String> params = JSONUtil.toList(requestParams, String.class);
+                        if(CollectionUtils.isNotEmpty(params)) {
+                            //将第一个参数和第二个参数脱敏
+                            if(params.size() >= 2) {
+                                String username_ = params.get(0);
+                                if(StringUtils.isNotBlank(username_)) {
+                                    String s = DesensitizeUtils.desensitizeStr(username_);
+                                    params.set(0, s);
+                                }
+                                String pwd_ = params.get(1);
+                                if(StringUtils.isNotBlank(pwd_)) {
+                                    String s = DesensitizeUtils.desensitizeStr(pwd_);
+                                    params.set(1, s);
+                                }
+                            }
+                            //序列化
+                            String jsonStr = JSONUtil.toJsonStr(params);
+                            sysLog.setRequestParams(jsonStr);
+                        }
+                    }
                 }
             });
         }
