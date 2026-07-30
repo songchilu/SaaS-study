@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yaya.config.YaYaConfig;
 import com.yaya.entity.SysDepartment;
 import com.yaya.entity.SysFile;
-import com.yaya.entity.SysUser;
 import com.yaya.exception.GlobalCommonException;
 import com.yaya.mapper.SysDepartmentMapper;
 import com.yaya.mapper.SysFileMapper;
@@ -18,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +30,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Transactional
@@ -44,10 +41,6 @@ public class FileServiceImpl implements FileService {
     private final List<String> extensions= Arrays.asList(".zip",".rar",".mp3",".mp4",".pdf",".docx",".doc",".xlsx",".xls",".pptx",".ppt",".txt");
     //头像格式
     private final List<String> picExtensions = Arrays.asList(".jpg",".jpeg",".png",".gif");
-    //MIME格式
-    private static final Set<String> ALLOWED_MIME = Set.of("image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp");
-    //校验文件格式的工具
-    private final Tika tika = new Tika();
 
     @Resource
     private SysFileMapper sysFileMapper;
@@ -85,12 +78,6 @@ public class FileServiceImpl implements FileService {
         if(lastIndexIfDot==-1){
             throw new GlobalCommonException("不能识别的文件格式");
         }
-        //判断文件是否是系统支持的文件格式
-        InputStream in = file.getInputStream();
-        String detectedMime = tika.detect(in).toLowerCase();
-        if (!ALLOWED_MIME.contains(detectedMime)) {
-            throw new GlobalCommonException("系统不支持这样的文件格式");
-        }
         //文件格式截取
         String suffix = filename.substring(lastIndexIfDot);
         //变成小写
@@ -99,7 +86,7 @@ public class FileServiceImpl implements FileService {
         boolean contains = picExtensions.contains(s);
         //如果不是我们支持的格式抛出异常
         if(!contains){
-            throw new GlobalCommonException("文件不存在或者格式错误");
+            throw new GlobalCommonException("系统不支持的图片格式");
         }
         //生成新文件名称
         String filename_new = IdUtil.getSnowflakeNextIdStr()+suffix;
@@ -123,15 +110,17 @@ public class FileServiceImpl implements FileService {
 
         //图片是否压缩
         if(compress != null && compress == 1){
+            //获取文件输入流
+            InputStream in = file.getInputStream();
             //压缩图片
             long targetBytes = 200 * 1024L;//目标压缩大小 当前目标200K
             long originalSize = IOUtils.consume(in);//源文件大小
             //如果源文件比目标文件小,不需要压缩
             if (originalSize <= targetBytes) {
                 Thumbnails.of(in).scale(1.0).outputQuality(1.0).toFile(new File(local_save_address));
-                System.out.println("无需压缩");
+                log.info("无需压缩");
             }else {
-                System.out.println("原始大小: " + (originalSize / 1024) + " KB");
+                log.info("原始大小:{}" ,((originalSize / 1024) + " KB"));
                 //先将文件保存到指定位置
                 file.transferTo(new File(local_save_address));
                 //获取这个文件循环压缩
@@ -152,7 +141,7 @@ public class FileServiceImpl implements FileService {
                     tempFile =  new File(local_save_address+".jpg");
                     //压缩后的文件大小
                     long currentSize = tempFile.length();
-                    System.out.printf("第%d次尝试 → 质量: %.2f, 缩放: %.2f → 大小: %d KB%n",attempt, quality, scale, currentSize / 1024);
+                    log.info("第{}次尝试 → 质量: {}, 缩放: {} → 大小: {}",attempt, quality, scale, currentSize / 1024);
                     //如果压缩后的文件已经比目标文件小,那么压缩完成直接输出
                     if (currentSize <= targetBytes) {
                         log.info("压缩✅....文件的压缩大小为:{}",currentSize);
@@ -213,7 +202,7 @@ public class FileServiceImpl implements FileService {
             if(picExtensions.contains(s)){
                 throw new GlobalCommonException("图片上传请使用uploadImage接口");
             }
-            throw new GlobalCommonException("支持的文件格式为:"+ List.of(extensions));
+            throw new GlobalCommonException("支持的文件格式为:"+ extensions);
         }
         //生成新文件名称
         String filename_new = IdUtil.getSnowflakeNextIdStr()+suffix;
