@@ -21,7 +21,7 @@
 
 
 ```
-分支(mastetr) : SaaS系统的基础分支
+分支(master) : SaaS系统的基础分支
 分支(yaya-rag): 知识库系统分支
 ```
 
