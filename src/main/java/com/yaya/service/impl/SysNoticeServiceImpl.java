@@ -14,9 +14,10 @@ import com.yaya.util.SecurityUtils;
 import jakarta.annotation.Resource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Transactional
 @Service
@@ -64,16 +65,16 @@ public class SysNoticeServiceImpl implements SysNoticeService {
 
     @Override
     public IPage<SysNotice> getSysNoticePage(Page<SysNotice> page, String noticeTitle) {
-        Page<SysNotice> sysNoticePage = sysNoticeMapper.selectPage(page, new LambdaQueryWrapper<SysNotice>()
-                .like(StringUtils.isNotEmpty(noticeTitle), SysNotice::getNoticeTitle, noticeTitle)
-        );
-        if(sysNoticePage!=null && CollectionUtils.isNotEmpty(sysNoticePage.getRecords())) {
-            sysNoticePage.getRecords().forEach(sysNotice->{
+        List<SysNotice> sysNotices = sysNoticeMapper.selectList(page, new LambdaQueryWrapper<SysNotice>()
+                .like(StringUtils.isNotEmpty(noticeTitle), SysNotice::getNoticeTitle, noticeTitle));
+        if (CollectionUtils.isNotEmpty(sysNotices)) {
+            sysNotices.forEach(sysNotice -> {
                 Long noticeTypeId = sysNotice.getNoticeTypeId();
                 SysNoticeType sysNoticeType = sysNoticeTypeMapper.selectById(noticeTypeId);
                 sysNotice.setSysNoticeType(sysNoticeType);
             });
+            page.setRecords(sysNotices);
         }
-        return sysNoticePage;
+        return page;
     }
 }

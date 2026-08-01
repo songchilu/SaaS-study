@@ -7,7 +7,6 @@ import com.yaya.entity.SysNotice;
 import com.yaya.entity.SysNoticeType;
 import com.yaya.entity.SysUser;
 import com.yaya.exception.GlobalCommonException;
-import com.yaya.mapper.SysDepartmentMapper;
 import com.yaya.mapper.SysNoticeMapper;
 import com.yaya.mapper.SysNoticeTypeMapper;
 import com.yaya.mapper.SysUserMapper;
@@ -31,8 +30,6 @@ public class SysNoticeTypeServiceImpl implements SysNoticeTypeService {
     private SysNoticeMapper sysNoticeMapper;
     @Resource
     private SysUserMapper sysUserMapper;
-    @Resource
-    private SysDepartmentMapper sysDepartmentMapper;
 
     @Override
     public void addSysNoticeType(SysNoticeType sysNoticeType) {
@@ -64,18 +61,16 @@ public class SysNoticeTypeServiceImpl implements SysNoticeTypeService {
 
     @Override
     public IPage<SysNoticeType> getSysNoticeTypePage(Page<SysNoticeType> page, String noticeTypeName) {
-        Boolean b = SecurityUtils.isRootOrAdminOrOperation();
-        Page<SysNoticeType> sysNoticeTypePage = sysNoticeTypeMapper.selectPage(page, new LambdaQueryWrapper<SysNoticeType>()
-                .like(StringUtils.isNotEmpty(noticeTypeName), SysNoticeType::getNoticeTypeName, noticeTypeName)
-        );
-        if(sysNoticeTypePage!=null && CollectionUtils.isNotEmpty(sysNoticeTypePage.getRecords())){
-            sysNoticeTypePage.getRecords().forEach(sysNoticeType -> {
+        List<SysNoticeType> sysNoticeTypes = sysNoticeTypeMapper.selectList(page, new LambdaQueryWrapper<SysNoticeType>().like(StringUtils.isNotEmpty(noticeTypeName), SysNoticeType::getNoticeTypeName, noticeTypeName));
+        if(CollectionUtils.isNotEmpty(sysNoticeTypes)){
+            sysNoticeTypes.forEach(sysNoticeType -> {
                 Long createId = sysNoticeType.getCreateId();
                 SysUser sysUser = sysUserMapper.selectById(createId);
                 sysNoticeType.setCreateUser(sysUser);
             });
         }
-        return sysNoticeTypePage;
+        page.setRecords(sysNoticeTypes);
+        return page;
     }
 
     @Override
