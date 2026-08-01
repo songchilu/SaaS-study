@@ -94,21 +94,33 @@ public class YaYaDataPermissionInterceptor implements DataPermissionHandler {
                         //1-所有数据(上面已处理,从2开始处理) 2-部门及子部门数据 3-本部门数据 4-本人数据 5-自定义部门数据
                         if(dataScope==2){ //部门及子部门数据
                             String sql=deptColumn + " IN(SELECT "+DEPT_ID_COLUMN+" FROM "+DEPT_TABLE+" WHERE "+DEPT_ID_COLUMN+"="+deptId+" OR FIND_IN_SET("+ deptId +","+DEPT_TREE_PATH_COLUMN+"))";
-                            return new AndExpression(where, CCJSqlParserUtil.parseCondExpression("("+sql+")"));
+                            if(where==null){
+                                return CCJSqlParserUtil.parseCondExpression("("+sql+")");
+                            }else {
+                                return new AndExpression(where, CCJSqlParserUtil.parseCondExpression("("+sql+")"));
+                            }
                         }else if(dataScope==3){ //本部门数据
                             /*
                                 本部门数据 SQL示例：select * from table where xxx=? AND yyy=? AND dept_id=?
                                 where关键字后的查询条件 xxx=? AND yyy=? 是函数where(Expression)传递过来的,这个 AND dept_id=?是部门需要根据数据权限拼接的
                              */
                             String sql=deptColumn.toString()+"="+deptId;
-                            return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                            if(where==null){
+                                return CCJSqlParserUtil.parseCondExpression(sql);
+                            }else {
+                                return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                            }
                         }else if(dataScope==4){
                             /*
                                 本人数据 SQL示例：select * from table where xxx=? AND yyy=? AND create_id=?
                                 where关键字后的查询条件 xxx=? AND yyy=? 是函数where(Expression)传递过来的,这个 AND create_id=?是用户需要根据数据权限拼接的
                              */
                             String sql=userColumn.toString()+"="+userId;
-                            return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                            if(where==null){
+                                return CCJSqlParserUtil.parseCondExpression(sql);
+                            }else {
+                                return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                            }
                         }else if(dataScope==5){ //自定义部门数据
                             //当前用户角色下自定义部门列表
                             List<SysRoleDept> roleDeptList = SecurityUtils.getRoleDept();
@@ -118,11 +130,19 @@ public class YaYaDataPermissionInterceptor implements DataPermissionHandler {
                                     where关键字后的查询条件 xxx=? AND yyy=? 是函数where(Expression)传递过来的,这个 AND dept_id IN () 是用户需要根据数据权限拼接的,如果为空可以直接拼一个永远不成立的条件 例如 1=0
                                  */
                                 String sql="1=0";
-                                return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                                if(where==null){
+                                    return CCJSqlParserUtil.parseCondExpression(sql);
+                                }else {
+                                    return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                                }
                             }else {
                                 String collect = roleDeptList.stream().map(x->x.getDeptId().toString()).collect(Collectors.joining(StringPool.COMMA));
                                 String sql=deptColumn+" IN( "+collect+" )";
-                                return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                                if(where==null){
+                                    return CCJSqlParserUtil.parseCondExpression(sql);
+                                }else {
+                                    return new AndExpression(where, CCJSqlParserUtil.parseCondExpression(sql));
+                                }
                             }
                         }
                     }
