@@ -19,6 +19,12 @@
 🌟后端采用 [SpringBoot4.x](https://spring.io/) 版本构建<br>
 🌟前端采用 [YaYa-LayUI-Admin-Plus](https://gitee.com/ukoko/yaya-layui-admin-plus) 模板构建
 
+
+```
+分支(mastetr) : SaaS系统的基础分支
+分支(yaya-rag): 知识库系统分支
+```
+
 ---
 ## 二、优势
 ```
