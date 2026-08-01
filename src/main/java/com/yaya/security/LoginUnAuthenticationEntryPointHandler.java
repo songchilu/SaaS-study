@@ -19,7 +19,7 @@ public class LoginUnAuthenticationEntryPointHandler implements AuthenticationEnt
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException{
         response.setCharacterEncoding("utf-8");
         response.setContentType("application/json");
-        Result error = Result.error("用户未登录或登录已过期,请重新登录");
+        Result error = Result.error(401,"用户未登录或登录已过期,请重新登录");
         String json = JSONUtil.toJsonStr(error);
         response.getWriter().print(json);
     }

@@ -20,7 +20,7 @@ public class LoginUnAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
         response.setCharacterEncoding("utf-8");
         response.setContentType("application/json");
-        Result result = Result.error("权限不足,请重新授权。");
+        Result result = Result.error(403,"权限不足,请重新授权。");
         //将消息json化
         String json = JSONUtil.toJsonStr(result);
         //送到客户端
