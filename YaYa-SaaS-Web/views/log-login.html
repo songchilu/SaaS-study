@@ -109,47 +109,55 @@
                     {
                         field:'businessName',
                         title: '功能',
-                        width:'18%'
+                        width:200
                     },
                     {
                         field:'requestUrl',
+                        width:200,
                         title:'请求地址'
                     },
                     {
                         field:'executionTime',
+                        width:150,
                         title: '执行时间(毫秒)'
                     },
                     {
                         title:'状态',
+                        width:100,
                         templet: function(d){
                             return d.status==1? `<span class="yaya-tag yaya-tag-light-success tag-small">成功</span>`:`<span class="yaya-tag yaya-tag-light-danger tag-small">失败</span>`;
                         }
                     },
                     {
                         field:'operTime',
-                        width:200,
+                        width:170,
                         title: '操作时间'
                     },
                     {
                         field:'browser',
+                        width:120,
                         title:'浏览器'
                     },
                     {
                         field:'ip',
+                        width:180,
                         title:'IP'
                     },
                     {
                         field:'address',
+                        width:180,
                         title:'地址'
                     },
                     {
                         title:'请求参数',
+                        width:200,
                         templet: function(d){
                             return d.status==1? `['***','***','***']`:`${d.requestParams}`;
                         }
                     },
                     {
                         field:'errorMsg',
+                        width:200,
                         title:'错误提示'
                     },
                 ]]
