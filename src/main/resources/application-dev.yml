@@ -39,6 +39,11 @@ spring:
 server:
   port: 8080 #服务器端口号
   forward-headers-strategy: native # 开启后，Spring 会自动解析 X-Forwarded-For 头，并重写 request.getRemoteAddr()
+  servlet:
+    session:
+      cookie:
+        http-only: true # http cookie只读
+        secure: true # https 只读
 mybatis-plus:
   type-aliases-package: com.yaya.entity # 类型别名
   mapper-locations: classpath*:/mapper/**/*.xml
