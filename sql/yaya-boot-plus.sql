@@ -91,6 +91,9 @@ INSERT INTO `sys_menu` VALUES (57, '视频上传', '', 3, 'video-upload', '', 56
 INSERT INTO `sys_menu` VALUES (58, '视频删除', '', 3, 'video-del', '', 56, 2, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
 INSERT INTO `sys_menu` VALUES (59, '视频查询', '', 3, 'video-search', '', 56, 3, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
 
+-- 文件上传按钮权限(文件管理页上传按钮,菜单ID 60)
+INSERT INTO `sys_menu` VALUES (60, '文件上传', '', 3, 'file-add', '', 50, 2, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+
 -- 部门表
 CREATE TABLE `sys_department` (
     `dept_id`      BIGINT	PRIMARY KEY  AUTO_INCREMENT     COMMENT '菜单ID,主键',

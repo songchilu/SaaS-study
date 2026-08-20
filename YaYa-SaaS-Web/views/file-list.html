@@ -44,9 +44,17 @@
                     <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
                         <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
                         <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                        <!-- 上传文件按钮(有权限才显示) -->
+                        <button type="button" id="upload-file-btn" class="yaya-btn yaya-primary" style="margin-left: 10px;display:none;"><i class="iconfont icon-CRMEB-tianjiawenjian-xianxing" style="padding-right: 5px;"></i> 上传文件</button>
                     </div>
                 </div>
             </form>
+        </div>
+        <!-- 上传进度条 -->
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;display:none;" id="file-upload-progress-panel">
+            <div class="layui-progress layui-progress-big" style="margin: 20px 0;" lay-showPercent="yes" lay-filter="filter-file">
+                <div class="layui-progress-bar" lay-percent=""></div>
+            </div>
         </div>
         <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
             <!-- 表格显示 -->
@@ -61,6 +69,13 @@
             const form = layui.form;
             const table = layui.table;
             const layer = layui.layer;
+            const upload = layui.upload;
+            const element = layui.element;
+
+            //上传文件按钮权限控制
+            if(is_super || hasPermission('file-add')){
+                $("#upload-file-btn").show();
+            }
 
             //搜索
             form.on('submit(search)', function(data){
@@ -81,6 +96,43 @@
             });
 
 
+            //上传文件(非图片,支持zip/rar/pdf/office等,单文件最大500MB)
+            let uploadMsgIndex;
+            upload.render({
+                elem: '#upload-file-btn',
+                url: server_url+'/uploadFile',
+                accept: 'file',
+                exts: 'zip,rar,mp3,mp4,pdf,doc,docx,xls,xlsx,ppt,pptx,txt',
+                headers: {'Authorization': token},
+                before: function(){
+                    //显示进度条并复位
+                    $("#file-upload-progress-panel").show();
+                    element.progress('filter-file', '0%');
+                    uploadMsgIndex = layer.msg('文件上传中...', {icon: 16, time: 0});
+                },
+                progress: function(n){
+                    let percent = n + '%'; // 获取进度百分比
+                    element.progress('filter-file', percent);
+                },
+                done: function(res){
+                    //隐藏进度条
+                    $("#file-upload-progress-panel").hide();
+                    layer.close(uploadMsgIndex);
+                    if(res.code===0){//成功
+                        layer.msg('上传成功');
+                        //刷新列表
+                        table.reload('table-file');
+                    }else{
+                        layer.msg(res.msg, {icon: 5});
+                    }
+                },
+                error: function(){
+                    //隐藏进度条
+                    $("#file-upload-progress-panel").hide();
+                    layer.close(uploadMsgIndex);
+                    layer.msg('上传失败,请重试', {icon: 5});
+                }
+            });
             //表格渲染
             table.render({
                 elem: '#table-file',

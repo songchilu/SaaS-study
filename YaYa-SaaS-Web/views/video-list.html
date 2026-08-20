@@ -79,7 +79,7 @@
             const element = layui.element;
 
             //上传按钮权限控制
-            if(hasPermission('video-upload')){
+            if(is_super || hasPermission('video-upload')){
                 $("#upload-video-btn").show();
             }
 
@@ -202,7 +202,7 @@
                         width: 90,
                         align: 'center',
                         templet: function(d){
-                            if(hasPermission('video-del')){
+                            if(is_super || hasPermission('video-del')){
                                 return '<button type="button" class="yaya-btn yaya-btn-sm" lay-event="delete">删除</button>';
                             }
                             return '';
