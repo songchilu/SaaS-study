@@ -1,0 +1,7 @@
+#!/bin/sh
+# pre-push: 推送前校验敏感信息,发现则中止推送
+ROOT_DIR=$(git rev-parse --show-toplevel)
+if [ -f "$ROOT_DIR/script/desensitize.sh" ]; then
+  sh "$ROOT_DIR/script/desensitize.sh" --check
+fi
+exit 0

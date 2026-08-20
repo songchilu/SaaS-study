@@ -1,0 +1,9 @@
+#!/bin/sh
+# pre-commit: 提交前自动脱敏,防止真实密钥/密码/服务器地址进入提交
+ROOT_DIR=$(git rev-parse --show-toplevel)
+if [ -f "$ROOT_DIR/script/desensitize.sh" ]; then
+  sh "$ROOT_DIR/script/desensitize.sh"
+  # 脱敏脚本可能修改了配置文件,重新加入暂存区
+  git add src/main/resources/application-dev.yml src/main/resources/application-prod.yml 2>/dev/null
+fi
+exit 0

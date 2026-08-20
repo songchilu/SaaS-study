@@ -1,7 +1,16 @@
+# ============================================================
+# 生产环境配置 - 脱敏通用模板
+# ⚠️ 本文件禁止提交真实密钥/密码/服务器地址,敏感值一律通过环境变量注入
+# 需在部署环境(服务器)配置的环境变量:
+#   YAYA_LOCAL_URL / YAYA_LOG_URL
+#   DB_HOST / DB_PORT / DB_NAME / DB_USERNAME / DB_PASSWORD
+#   REDIS_HOST / REDIS_PORT / REDIS_PASSWORD
+#   DEEPSEEK_API_KEY
+# ============================================================
 # 自定义配置
 yaya:
-  local-url: /home/yaya-saas-plus           # SpringBoot的静态资源保存的位置,例如图片视频音频其它文件等
-  log-url: /home/yaya-saas-plus/log         # 日志的保存路径
+  local-url: ${YAYA_LOCAL_URL:/home/yaya-saas-plus}      # SpringBoot的静态资源保存的位置,例如图片视频音频其它文件等
+  log-url: ${YAYA_LOG_URL:/home/yaya-saas-plus/log}      # 日志的保存路径
   captcha-timeout: 60                       # 验证码过期时间,单位为秒 默认60秒
   token-timeout: 43200                      # 访问令牌过期时间,单位分钟 默认30天
   captcha-length: 4                         # 验证码生成的内容数量,不设置默认为4个
@@ -11,18 +20,18 @@ yaya:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://106.14.27.178:3306/yaya-saas-plus?characterEncoding=utf-8&useUnicode=true&useSSL=true&serverTimezone=GMT%2B8&allowMultiQueries=true
-    username: root
-    password: xxx123
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:yaya-saas-plus}?characterEncoding=utf-8&useUnicode=true&useSSL=true&serverTimezone=GMT%2B8&allowMultiQueries=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:xxxxx}
   web:
     resources:
       static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, classpath:/public/,file:${yaya.local-url}/  # 配置静态资源位置,通过服务器地址可以访问此目录下的资源
   data:
     redis:
-      host: 106.14.27.178 # Redis地址
+      host: ${REDIS_HOST:127.0.0.1} # Redis地址
       port: 6379      # 端口
       database: 0     # 使用的数据库
-      password: xxx123      # 密码
+      password: ${REDIS_PASSWORD:xxxxx}      # 密码
       timeout: 10000  # 超时时间
       lettuce:
         pool:
@@ -32,7 +41,7 @@ spring:
           max-wait: 1000ms # 获取连接超时时间
   ai:
     deepseek:
-      api-key: sk-f09bd838d9784353ab8d742105a2c0056
+      api-key: ${DEEPSEEK_API_KEY:sk-xxxxx}
       base-url: https://api.deepseek.com
       chat:
         model: deepseek-v4-pro
