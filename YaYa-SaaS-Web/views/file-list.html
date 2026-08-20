@@ -212,6 +212,62 @@
                 });
             });
 
+            //================ 列表预览 ================
+            //文件类型判断: 按URL路径区分 图片/视频/文件
+            function getFileType(fileServerUrl){
+                if(fileServerUrl && fileServerUrl.indexOf('/images/') > -1){
+                    return 'image';
+                }
+                if(fileServerUrl && fileServerUrl.indexOf('/videos/') > -1){
+                    return 'video';
+                }
+                return 'file';
+            }
+
+            //视频封面缓存(fileId -> dataURL)
+            const videoCoverCache = {};
+
+            //截取视频封面(隐藏video+canvas取首帧)
+            function captureVideoCover(url){
+                return new Promise(function(resolve, reject){
+                    let video = document.createElement('video');
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.preload = 'auto';
+                    video.src = url;
+                    let settled = false;
+                    function finish(){
+                        if(settled){ return; }
+                        settled = true;
+                        try{
+                            let canvas = document.createElement('canvas');
+                            canvas.width = 160;
+                            canvas.height = 90;
+                            let ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        }catch(e){
+                            reject(e);
+                        }finally{
+                            video.removeAttribute('src');
+                            video.load();
+                        }
+                    }
+                    video.addEventListener('loadeddata', function(){
+                        try{
+                            video.currentTime = 0.1; //跳转到0.1秒附近取一帧作为封面
+                        }catch(e){}
+                    });
+                    video.addEventListener('seeked', finish);
+                    video.addEventListener('error', function(){
+                        if(!settled){ settled = true; reject(new Error('视频加载失败')); }
+                    });
+                    //兜底超时
+                    setTimeout(function(){
+                        if(!settled){ settled = true; reject(new Error('封面截取超时')); }
+                    }, 8000);
+                });
+            }
             //表格渲染
             table.render({
                 elem: '#table-file',
@@ -245,6 +301,25 @@
                     pageName: 'pageNo', // 页码的参数名称，默认：page
                     limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
                 },
+                done: function(){
+                    //加载视频封面(命中缓存直接显示,否则异步截帧)
+                    $(".video-cover-img").each(function(){
+                        let $img = $(this);
+                        let fileId = $img.data('file-id');
+                        let url = $img.data('url');
+                        if(videoCoverCache[fileId]){
+                            $img.attr('src', videoCoverCache[fileId]);
+                            return;
+                        }
+                        captureVideoCover(url).then(function(dataUrl){
+                            videoCoverCache[fileId] = dataUrl;
+                            $img.attr('src', dataUrl);
+                        }).catch(function(){
+                            //封面截取失败,显示占位图标,保留点击播放
+                            $img.replaceWith('<div lay-event="preview" style="width:100px;height:60px;line-height:60px;background:#f5f7fa;border-radius:4px;cursor:pointer;"><i class="iconfont icon-CRMEB-shipin-xianxing" style="font-size:24px;color:#409eff;"></i></div>');
+                        });
+                    });
+                },
                 cols: [[
                     {
                         title: '#',
@@ -253,6 +328,22 @@
                     {
                         field:'fileName',
                         title: '文件名'
+                    },
+                    {
+                        title: '预览',
+                        width: 140,
+                        align: 'center',
+                        templet: function(d){
+                            let type = getFileType(d.fileServerUrl);
+                            let url = file_url + '/' + d.fileServerUrl;
+                            if(type === 'image'){
+                                return '<img lay-event="preview" src="'+url+'" style="width:100px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;" alt="图片">';
+                            }
+                            if(type === 'video'){
+                                return '<img class="video-cover-img" lay-event="preview" data-file-id="'+d.fileId+'" data-url="'+url+'" src="" style="width:100px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;background:#f0f2f5;">';
+                            }
+                            return '<div style="width:100px;height:60px;line-height:60px;background:#f5f7fa;border-radius:4px;"><i class="iconfont icon-CRMEB-wenjian-xianxing" style="font-size:24px;color:#409eff;"></i></div>';
+                        }
                     },
                     {
                         field:'deptName',
@@ -272,7 +363,32 @@
                     }
                 ]]
             })
-
+            //行工具事件 - 图片放大/视频播放
+            table.on('tool(table-file)', function(obj){
+                if(obj.event === 'preview'){
+                    let d = obj.data;
+                    let url = file_url + '/' + d.fileServerUrl;
+                    let type = getFileType(d.fileServerUrl);
+                    if(type === 'image'){
+                        //图片放大预览
+                        layer.photos({
+                            photos: {
+                                title: d.fileName,
+                                data: [{ src: url, alt: d.fileName }]
+                            },
+                            anim: 5
+                        });
+                    }else if(type === 'video'){
+                        //视频播放预览
+                        layer.open({
+                            type: 1,
+                            title: d.fileName,
+                            area: ['800px', '450px'],
+                            content: '<video controls autoplay style="width:100%;height:100%;background:#000;" src="'+url+'"></video>'
+                        });
+                    }
+                }
+            });
         });
     </script>
 </body>
