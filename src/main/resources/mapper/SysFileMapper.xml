@@ -15,13 +15,26 @@
             LEFT JOIN sys_department d ON d.dept_id=f.dept_id
         <where>
             <if test="fileServerUrl!=null and fileServerUrl!=''">
-                file_server_url LIKE CONCAT('%',#{fileServerUrl},'%')
+                f.file_server_url LIKE CONCAT('%',#{fileServerUrl},'%')
+            </if>
+            <if test="fileName!=null and fileName!=''">
+                AND f.file_name LIKE CONCAT('%',#{fileName},'%')
+            </if>
+            <if test="fileType!=null and fileType!=''">
+                <choose>
+                    <when test="fileType=='image'">AND f.file_server_url LIKE '%/images/%'</when>
+                    <when test="fileType=='video'">AND f.file_server_url LIKE '%/videos/%'</when>
+                    <otherwise>AND f.file_server_url NOT LIKE '%/images/%' AND f.file_server_url NOT LIKE '%/videos/%'</otherwise>
+                </choose>
+            </if>
+            <if test="nickname!=null and nickname!=''">
+                AND u.nickname LIKE CONCAT('%',#{nickname},'%')
             </if>
             <if test="startTime!=null and endTime!=null">
-                AND create_time <![CDATA[ >= ]]> #{startTime} AND create_time <![CDATA[ <= ]]> #{endTime}
+                AND f.create_time <![CDATA[ >= ]]> #{startTime} AND f.create_time <![CDATA[ <= ]]> #{endTime}
             </if>
             <if test="deptId!=null">
-                AND dept_id=#{deptId}
+                AND f.dept_id=#{deptId}
             </if>
         </where>
         ORDER BY update_time DESC

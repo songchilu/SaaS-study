@@ -47,7 +47,7 @@ public interface FileService {
      * @param deptId         部门ID
      * @return  分页
      */
-    IPage<SysFile> getFilePage(Page<SysFile> page,String fileServerUrl,LocalDateTime startTime, LocalDateTime endTime, Long deptId);
+    IPage<SysFile> getFilePage(Page<SysFile> page,String fileServerUrl,String fileName,String fileType,String nickname,LocalDateTime startTime, LocalDateTime endTime, Long deptId);
 
     /**
      * 视频分页
@@ -65,4 +65,10 @@ public interface FileService {
      * @param fileId  视频ID
      */
     void deleteVideo(Long fileId);
+
+    /**
+     * 删除文件
+     * @param fileId  文件ID
+     */
+    void deleteFile(Long fileId);
 }

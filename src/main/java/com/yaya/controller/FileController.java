@@ -49,6 +49,9 @@ public class FileController {
     @Parameters(value = {
             @Parameter(name = "pageNo",description = "当前页",required = true),
             @Parameter(name = "pageSize",description = "当前页",required = true),
+            @Parameter(name = "fileName",description = "文件名"),
+            @Parameter(name = "fileType",description = "文件类型(image-图片 video-视频 file-文件)"),
+            @Parameter(name = "nickname",description = "上传人昵称"),
             @Parameter(name = "deptId",description = "部门ID"),
             @Parameter(name = "fileServerUrl",description = "文件服务地址"),
             @Parameter(name = "startTime",description = "开始时间"),
@@ -57,11 +60,22 @@ public class FileController {
     @PostMapping(value = "/getFilePage")
     public Result<IPage<SysFile>> getFilePage(@RequestParam(value = "pageNo") Integer pageNo,
                                               @RequestParam(value = "pageSize") Integer pageSize,
+                                              @RequestParam(value = "fileName",required = false) String fileName,
+                                              @RequestParam(value = "fileType",required = false) String fileType,
+                                              @RequestParam(value = "nickname",required = false) String nickname,
                                               @RequestParam(value = "fileServerUrl",required = false) String fileServerUrl,
                                               @RequestParam(value = "startTime",required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
                                               @RequestParam(value = "endTime",required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
                                               @RequestParam(value = "deptId",required = false) Long deptId){
-        return Result.ok(fileService.getFilePage(new Page<>(pageNo, pageSize),fileServerUrl,startTime,endTime,deptId));
+        return Result.ok(fileService.getFilePage(new Page<>(pageNo, pageSize),fileServerUrl,fileName,fileType,nickname,startTime,endTime,deptId));
+    }
+
+    @LogCollect(module = "文件管理-删除文件",logRequest = true)
+    @Operation(summary = "删除文件")
+    @PostMapping(value = "/deleteFile")
+    public Result<Object> deleteFile(@Parameter(name = "fileId",description = "文件ID",required = true) @RequestParam(value = "fileId") Long fileId){
+        fileService.deleteFile(fileId);
+        return Result.ok();
     }
 
     @LogCollect(module = "视频管理-上传视频",logRequest = true,logResponse = true)

@@ -246,7 +246,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public IPage<SysFile> getFilePage(Page<SysFile> page, String fileServerUrl, LocalDateTime startTime, LocalDateTime endTime, Long deptId) {
+    public IPage<SysFile> getFilePage(Page<SysFile> page, String fileServerUrl, String fileName, String fileType, String nickname, LocalDateTime startTime, LocalDateTime endTime, Long deptId) {
         //判断是否是平台管理员,如果是平台管理员可以查看全部以及基于租户查询，如果不是平台管理员,只能看见自己租户下的文件
         Boolean b = SecurityUtils.isRootOrAdminOrOperation();
         if(!b){
@@ -254,7 +254,7 @@ public class FileServiceImpl implements FileService {
             SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId_);
             deptId = department.getDeptId();
         }
-        return sysFileMapper.getFilePage(page, fileServerUrl, startTime, endTime, deptId);
+        return sysFileMapper.getFilePage(page, fileServerUrl, fileName, fileType, nickname, startTime, endTime, deptId);
     }
 
     @Override
@@ -354,6 +354,33 @@ public class FileServiceImpl implements FileService {
             SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId);
             if(!Objects.equals(sysFile.getDeptId(), department.getDeptId())){
                 throw new GlobalCommonException("无权删除该视频");
+            }
+        }
+        //删除物理文件
+        String fileLocalUrl = sysFile.getFileLocalUrl();
+        if(StringUtils.isNotBlank(fileLocalUrl)){
+            FileUtil.del(fileLocalUrl);
+        }
+        //删除数据库记录
+        sysFileMapper.deleteById(fileId);
+    }
+
+    @Override
+    public void deleteFile(Long fileId) {
+        if(fileId == null){
+            throw new GlobalCommonException("文件ID不能为空");
+        }
+        SysFile sysFile = sysFileMapper.selectById(fileId);
+        if(sysFile == null){
+            throw new GlobalCommonException("文件不存在");
+        }
+        //非平台管理员只能删除自己租户下的文件
+        Boolean b = SecurityUtils.isRootOrAdminOrOperation();
+        if(!b){
+            Long deptId = SecurityUtils.getDeptId();
+            SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId);
+            if(!Objects.equals(sysFile.getDeptId(), department.getDeptId())){
+                throw new GlobalCommonException("无权删除该文件");
             }
         }
         //删除物理文件
