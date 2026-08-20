@@ -202,6 +202,11 @@
             <version>4.0.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>7.0.8</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
