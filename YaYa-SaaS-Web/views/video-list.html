@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LayUI css库 -->
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/yaya-common.css">
+    <link rel="stylesheet" href="../css/yaya-style-extend.css">
+    <!-- 第三方图标库css -->
+    <link rel="stylesheet" href="../font/iconfont.css">
+    <title>视频管理</title>
+    <style>
+        /* 分页页码显示 伪类 */
+        .layui-laypage a:hover{
+            color: #409eff;
+        }
+        /* 下拉框圆角 */
+        .layui-form-select .layui-input{
+            border-radius: 5px;
+        }
+        /* 弹出层圆角 */
+        .layui-layer{
+            border-radius: 10px;
+        }
+        /* 单选框颜色 */
+        .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
+            color: #409eff;
+        }
+        .yaya-btn-sm{
+            padding: 0 12px;
+            height: 26px;
+            line-height: 26px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="yaya-container">
+        <div class="yaya-panel">
+            <form class="layui-form" style="padding: 10px 0;">
+                <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">文件名</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="fileName" placeholder="视频文件名" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md6 layui-col-sm6 yaya-form-item">
+                        <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                        <!-- 上传视频按钮(有权限才显示) -->
+                        <button type="button" id="upload-video-btn" class="yaya-btn yaya-primary" style="margin-left: 10px;display:none;"><i class="iconfont icon-CRMEB-shipin-xianxing" style="padding-right: 5px;"></i> 上传视频</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- 上传进度条 -->
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;display:none;" id="video-upload-progress-panel">
+            <div class="layui-progress layui-progress-big" style="margin: 20px 0;" lay-showPercent="yes" lay-filter="filter-video">
+                <div class="layui-progress-bar" lay-percent=""></div>
+            </div>
+        </div>
+        <div class="yaya-panel" style="margin-top: 15px;padding: 5px;">
+            <!-- 表格显示 -->
+            <table class="layui-hide" id="table-video" lay-filter="table-video"></table>
+        </div>
+    </div>
+    <script src="../layui/layui.js"></script>
+    <script src="../js/server.js"></script>
+    <script>
+        layui.use(function(){
+            const $ = layui.$;
+            const form = layui.form;
+            const table = layui.table;
+            const layer = layui.layer;
+            const upload = layui.upload;
+            const element = layui.element;
+
+            //上传按钮权限控制
+            if(hasPermission('video-upload')){
+                $("#upload-video-btn").show();
+            }
+
+            //搜索
+            form.on('submit(search)', function(data){
+                let field = data.field; // 获得表单字段
+                // 执行搜索重载
+                table.reload('table-video', {
+                    page: {
+                        curr: 1, // 重新从第 1 页开始
+                        prev:'上一页',
+                        next:'下一页',
+                        limit:10,
+                        limits:[10,20,30,40,50],
+                        theme:'#409eff'
+                    },
+                    where: field // 搜索的字段
+                });
+                return false; // 阻止默认 form 跳转
+            });
+
+            //上传视频(仅支持MP4,单文件最大500MB)
+            let uploadMsgIndex;
+            upload.render({
+                elem: '#upload-video-btn',
+                url: server_url+'/uploadVideo',
+                accept: 'file',
+                exts: 'mp4',
+                headers: {'Authorization': token},
+                before: function(){
+                    //显示进度条并复位
+                    $("#video-upload-progress-panel").show();
+                    element.progress('filter-video', '0%');
+                    uploadMsgIndex = layer.msg('视频上传中...', {icon: 16, time: 0});
+                },
+                progress: function(n){
+                    let percent = n + '%'; // 获取进度百分比
+                    element.progress('filter-video', percent);
+                },
+                done: function(res){
+                    //隐藏进度条
+                    $("#video-upload-progress-panel").hide();
+                    layer.close(uploadMsgIndex);
+                    if(res.code===0){//成功
+                        layer.msg('上传成功');
+                        //刷新列表
+                        table.reload('table-video');
+                    }else{
+                        layer.msg(res.msg, {icon: 5});
+                    }
+                },
+                error: function(){
+                    //隐藏进度条
+                    $("#video-upload-progress-panel").hide();
+                    layer.close(uploadMsgIndex);
+                    layer.msg('上传失败,请重试', {icon: 5});
+                }
+            });
+
+            //表格渲染
+            table.render({
+                elem: '#table-video',
+                url: server_url+'/getVideoPage',
+                method:'POST',
+                headers:{
+                    'Authorization':token
+                },
+                skin:'line',
+                height:'full',
+                parseData: function(res){
+                    return {
+                        "code" : res.code,
+                        "msg"  : res.msg,
+                        "data" : res.data.records,
+                        "count": res.data.total
+                    }
+                },
+                page:{
+                    prev:'上一页',
+                    next:'下一页',
+                    limit:10,
+                    limits:[10,20,30,40,50],
+                    theme:'#409eff'
+                },
+                request: {
+                    pageName: 'pageNo', // 页码的参数名称，默认：page
+                    limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
+                },
+                cols: [[
+                    {
+                        title: '#',
+                        type: 'numbers'
+                    },
+                    {
+                        field:'fileName',
+                        title: '文件名'
+                    },
+                    {
+                        field:'nickname',
+                        title:'上传人'
+                    },
+                    {
+                        field:'deptName',
+                        title: '部门'
+                    },
+                    {
+                        field:'createTime',
+                        title: '上传时间'
+                    },
+                    {
+                        title: '预览',
+                        width: 90,
+                        align: 'center',
+                        templet: function(d){
+                            return '<button type="button" class="yaya-btn yaya-btn-sm yaya-primary" lay-event="preview">预览</button>';
+                        }
+                    },
+                    {
+                        title: '操作',
+                        width: 90,
+                        align: 'center',
+                        templet: function(d){
+                            if(hasPermission('video-del')){
+                                return '<button type="button" class="yaya-btn yaya-btn-sm" lay-event="delete">删除</button>';
+                            }
+                            return '';
+                        }
+                    }
+                ]]
+            });
+
+            //行工具事件 - 预览 / 删除
+            table.on('tool(table-video)', function(obj){
+                const data = obj.data;
+                if(obj.event === 'preview'){
+                    //弹层播放视频
+                    layer.open({
+                        type: 1,
+                        title: data.fileName,
+                        area: ['800px', '450px'],
+                        content: '<video controls autoplay style="width:100%;height:100%;background:#000;" src="'+file_url+'/'+data.fileServerUrl+'"></video>'
+                    });
+                }else if(obj.event === 'delete'){
+                    layer.confirm('确定删除视频【'+data.fileName+'】吗?', {icon: 3, title: '删除确认'}, function(index){
+                        $.ajax({
+                            type: 'POST',
+                            url: server_url+'/deleteVideo',
+                            headers: {
+                                'Authorization': token
+                            },
+                            data: {
+                                fileId: data.fileId
+                            },
+                            dataType: 'json',
+                            success: function(res){
+                                if(res.code===0){
+                                    layer.msg('删除成功');
+                                    //刷新列表
+                                    table.reload('table-video');
+                                }else{
+                                    layer.msg(res.msg, {icon: 5});
+                                }
+                            },
+                            error: function(){
+                                layer.msg('删除失败,请重试', {icon: 5});
+                            }
+                        });
+                        layer.close(index);
+                    });
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

@@ -6,8 +6,8 @@ spring:
     active: dev # 多环境选择
   servlet:
     multipart:
-      max-file-size: 100MB     # 文件上传单个文件约束
-      max-request-size: 512MB # 文件上传总文件大小约束
+      max-file-size: 500MB     # 文件上传单个文件约束
+      max-request-size: 600MB # 文件上传总文件大小约束
 management:
   server:
     port: 8989 # 健康检查配置独立的访问端口号,和业务端口号分开

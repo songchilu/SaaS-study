@@ -63,4 +63,38 @@ public class FileController {
                                               @RequestParam(value = "deptId",required = false) Long deptId){
         return Result.ok(fileService.getFilePage(new Page<>(pageNo, pageSize),fileServerUrl,startTime,endTime,deptId));
     }
+
+    @LogCollect(module = "视频管理-上传视频",logRequest = true,logResponse = true)
+    @Operation(summary = "视频上传")
+    @PostMapping(value = "/uploadVideo")
+    public Result<Map<String,String>> uploadVideo(@Parameter(description = "上传的视频文件",required = true) @RequestParam(value = "file") MultipartFile file) throws IOException {
+        return Result.ok(fileService.uploadVideo(file));
+    }
+
+    @Operation(summary = "视频分页")
+    @Parameters(value = {
+            @Parameter(name = "pageNo",description = "当前页",required = true),
+            @Parameter(name = "pageSize",description = "页容量",required = true),
+            @Parameter(name = "fileName",description = "文件名"),
+            @Parameter(name = "startTime",description = "开始时间"),
+            @Parameter(name = "endTime",description = "结束时间"),
+            @Parameter(name = "deptId",description = "部门ID")
+    })
+    @PostMapping(value = "/getVideoPage")
+    public Result<IPage<SysFile>> getVideoPage(@RequestParam(value = "pageNo") Integer pageNo,
+                                               @RequestParam(value = "pageSize") Integer pageSize,
+                                               @RequestParam(value = "fileName",required = false) String fileName,
+                                               @RequestParam(value = "startTime",required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+                                               @RequestParam(value = "endTime",required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
+                                               @RequestParam(value = "deptId",required = false) Long deptId){
+        return Result.ok(fileService.getVideoPage(new Page<>(pageNo, pageSize),fileName,startTime,endTime,deptId));
+    }
+
+    @LogCollect(module = "视频管理-删除视频",logRequest = true)
+    @Operation(summary = "删除视频")
+    @PostMapping(value = "/deleteVideo")
+    public Result<Object> deleteVideo(@Parameter(name = "fileId",description = "视频ID",required = true) @RequestParam(value = "fileId") Long fileId){
+        fileService.deleteVideo(fileId);
+        return Result.ok();
+    }
 }

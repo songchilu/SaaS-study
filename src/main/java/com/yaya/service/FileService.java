@@ -31,6 +31,14 @@ public interface FileService {
     Map<String,String> uploadFile(MultipartFile file) throws IOException;
 
     /**
+     * 视频上传(仅支持MP4)
+     * @param file          视频文件
+     * @return              视频访问地址
+     * @throws IOException  异常
+     */
+    Map<String,String> uploadVideo(MultipartFile file) throws IOException;
+
+    /**
      * 文件分页
      * @param page              分页信息
      * @param fileServerUrl     访问地址
@@ -40,4 +48,21 @@ public interface FileService {
      * @return  分页
      */
     IPage<SysFile> getFilePage(Page<SysFile> page,String fileServerUrl,LocalDateTime startTime, LocalDateTime endTime, Long deptId);
+
+    /**
+     * 视频分页
+     * @param page          分页信息
+     * @param fileName      文件名
+     * @param startTime     开始时间
+     * @param endTime       结束时间
+     * @param deptId        部门ID(平台管理员可指定,非平台管理员强制本人租户)
+     * @return  分页
+     */
+    IPage<SysFile> getVideoPage(Page<SysFile> page,String fileName,LocalDateTime startTime, LocalDateTime endTime, Long deptId);
+
+    /**
+     * 删除视频
+     * @param fileId  视频ID
+     */
+    void deleteVideo(Long fileId);
 }

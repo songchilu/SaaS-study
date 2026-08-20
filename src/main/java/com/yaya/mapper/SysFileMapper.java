@@ -22,5 +22,15 @@ public interface SysFileMapper extends BaseMapper<SysFile> {
      * @return  分页
      */
     Page<SysFile> getFilePage(Page<SysFile> page, @Param("fileServerUrl") String fileServerUrl, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("deptId") Long deptId);
+    /**
+     * 视频分页(只查询 /videos/ 目录下的记录)
+     * @param page          分页信息
+     * @param fileName      文件名
+     * @param startTime     开始时间
+     * @param endTime       结束时间
+     * @param deptId        部门ID
+     * @return  分页
+     */
+    Page<SysFile> getVideoPage(Page<SysFile> page, @Param("fileName") String fileName, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("deptId") Long deptId);
 
 }
