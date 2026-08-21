@@ -1,5 +1,6 @@
 package com.yaya.service.impl;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,6 +20,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -30,6 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Transactional
@@ -243,7 +246,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public IPage<SysFile> getFilePage(Page<SysFile> page, String fileServerUrl, LocalDateTime startTime, LocalDateTime endTime, Long deptId) {
+    public IPage<SysFile> getFilePage(Page<SysFile> page, String fileServerUrl, String fileName, String fileType, String nickname, LocalDateTime startTime, LocalDateTime endTime, Long deptId) {
         //判断是否是平台管理员,如果是平台管理员可以查看全部以及基于租户查询，如果不是平台管理员,只能看见自己租户下的文件
         Boolean b = SecurityUtils.isRootOrAdminOrOperation();
         if(!b){
@@ -251,6 +254,141 @@ public class FileServiceImpl implements FileService {
             SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId_);
             deptId = department.getDeptId();
         }
-        return sysFileMapper.getFilePage(page, fileServerUrl, startTime, endTime, deptId);
+        return sysFileMapper.getFilePage(page, fileServerUrl, fileName, fileType, nickname, startTime, endTime, deptId);
+    }
+
+    @Override
+    public Map<String, String> uploadVideo(MultipartFile file) throws IOException {
+        //获取当前操作用户的租户信息
+        SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(SecurityUtils.getDeptId());
+        //判断文件是否为空
+        boolean empty = file.isEmpty();
+        if(empty){
+            throw new GlobalCommonException("文件内容为空");
+        }
+        //获取文件名
+        String filename = file.getOriginalFilename();
+        if(StringUtils.isEmpty(filename)){
+            throw new GlobalCommonException("文件名称不能为空");
+        }
+        //判断文件是否存在后缀
+        int lastIndexIfDot = filename.lastIndexOf(".");
+        if(lastIndexIfDot==-1){
+            throw new GlobalCommonException("不能识别的文件格式");
+        }
+        //文件格式截取
+        String suffix = filename.substring(lastIndexIfDot);
+        //变成小写
+        String s = suffix.toLowerCase();
+        //只支持MP4视频
+        if(!".mp4".equals(s)){
+            throw new GlobalCommonException("仅支持MP4视频");
+        }
+        //生成新文件名称
+        String filename_new = IdUtil.getSnowflakeNextIdStr()+suffix;
+        //文件保存的位置
+        LocalDate now = LocalDate.now();
+        //拼接文件保存位置的具体目录 file+用户租户ID+视频目录+年+月+日
+        String pinJoin="file/"+department.getDeptId()+"/videos/"+now.getYear()+"/"+now.getMonthValue()+"/"+now.getDayOfMonth();
+        //文件保存到服务器的硬盘地址
+        String localUrl =yaYaConfig.getLocalUrl()+"/"+pinJoin;
+        //判断文件路径是否存在
+        File f_ = new File(localUrl);
+        if(!f_.exists()){
+            boolean md = f_.mkdirs();
+            log.info("视频上传中...存储目录不存在...目录创建中...目录创建状态:{}",(md?"成功":"失败"));
+        }
+        //本地地址-完整
+        String local_save_address=localUrl+"/"+filename_new;
+        //用户访问地址-完整
+        String local_server_url=pinJoin+"/"+filename_new;
+        //保存文件到本地
+        file.transferTo(new File(local_save_address));
+        //校验文件真实内容,防止伪造扩展名上传非视频文件
+        Tika tika = new Tika();
+        String mimeType = tika.detect(new File(local_save_address));
+        if(!StringUtils.equals("video/mp4", mimeType)){
+            //内容校验失败,删除已保存的物理文件
+            FileUtil.del(local_save_address);
+            throw new GlobalCommonException("仅支持MP4视频,文件内容与扩展名不符");
+        }
+        //数据库保存
+        SysFile sysFile = new SysFile();
+        sysFile.setFileName(filename);
+        sysFile.setDeptId(department.getDeptId());
+        sysFile.setCreateId(SecurityUtils.getUserId());
+        sysFile.setFileLocalUrl(local_save_address);
+        sysFile.setFileServerUrl(local_server_url);
+        sysFileMapper.insert(sysFile);
+        //返回服务器访问地址
+        Map<String,String> map = new HashMap<>();
+        map.put("video_url",local_server_url);
+        return map;
+    }
+
+    @Override
+    public IPage<SysFile> getVideoPage(Page<SysFile> page, String fileName, LocalDateTime startTime, LocalDateTime endTime, Long deptId) {
+        //判断是否是平台管理员,如果是平台管理员可以查看全部以及基于租户查询，如果不是平台管理员,只能看见自己租户下的视频
+        Boolean b = SecurityUtils.isRootOrAdminOrOperation();
+        if(!b){
+            Long deptId_ = SecurityUtils.getDeptId();
+            SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId_);
+            deptId = department.getDeptId();
+        }
+        return sysFileMapper.getVideoPage(page, fileName, startTime, endTime, deptId);
+    }
+
+    @Override
+    public void deleteVideo(Long fileId) {
+        if(fileId == null){
+            throw new GlobalCommonException("视频ID不能为空");
+        }
+        SysFile sysFile = sysFileMapper.selectById(fileId);
+        if(sysFile == null){
+            throw new GlobalCommonException("视频不存在");
+        }
+        //非平台管理员只能删除自己租户下的视频
+        Boolean b = SecurityUtils.isRootOrAdminOrOperation();
+        if(!b){
+            Long deptId = SecurityUtils.getDeptId();
+            SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId);
+            if(!Objects.equals(sysFile.getDeptId(), department.getDeptId())){
+                throw new GlobalCommonException("无权删除该视频");
+            }
+        }
+        //删除物理文件
+        String fileLocalUrl = sysFile.getFileLocalUrl();
+        if(StringUtils.isNotBlank(fileLocalUrl)){
+            FileUtil.del(fileLocalUrl);
+        }
+        //删除数据库记录
+        sysFileMapper.deleteById(fileId);
+    }
+
+    @Override
+    public void deleteFile(Long fileId) {
+        if(fileId == null){
+            throw new GlobalCommonException("文件ID不能为空");
+        }
+        SysFile sysFile = sysFileMapper.selectById(fileId);
+        if(sysFile == null){
+            throw new GlobalCommonException("文件不存在");
+        }
+        //非平台管理员只能删除自己租户下的文件
+        Boolean b = SecurityUtils.isRootOrAdminOrOperation();
+        if(!b){
+            Long deptId = SecurityUtils.getDeptId();
+            SysDepartment department = sysDepartmentMapper.getTopDepartmentByDeptId(deptId);
+            if(!Objects.equals(sysFile.getDeptId(), department.getDeptId())){
+                throw new GlobalCommonException("无权删除该文件");
+            }
+        }
+        //删除物理文件
+        String fileLocalUrl = sysFile.getFileLocalUrl();
+        if(StringUtils.isNotBlank(fileLocalUrl)){
+            FileUtil.del(fileLocalUrl);
+        }
+        //删除数据库记录
+        sysFileMapper.deleteById(fileId);
     }
 }

@@ -85,6 +85,18 @@ INSERT INTO `sys_menu` VALUES (53, '密钥添加', 'iconfont icon-CRMEB-kucungua
 INSERT INTO `sys_menu` VALUES (54, '密钥查询', 'iconfont icon-tubiao', 3, 'key-search', '', 52, 2, 1, 1, 1, '2026-07-08 10:01:31', '2026-07-08 10:01:31');
 INSERT INTO `sys_menu` VALUES (55, '密钥删除', 'iconfont icon-upload', 3, 'key-del', '', 52, 3, 1, 1, 1, '2026-07-11 10:14:04', '2026-07-11 10:14:04');
 
+-- 视频管理菜单(视频上传功能,菜单ID 56~59)
+INSERT INTO `sys_menu` VALUES (56, '视频管理', 'iconfont icon-CRMEB-shipin-xianxing', 2, '', 'views/video-list.html', 1, 8, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+INSERT INTO `sys_menu` VALUES (57, '视频上传', '', 3, 'video-upload', '', 56, 1, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+INSERT INTO `sys_menu` VALUES (58, '视频删除', '', 3, 'video-del', '', 56, 2, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+INSERT INTO `sys_menu` VALUES (59, '视频查询', '', 3, 'video-search', '', 56, 3, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+
+-- 文件上传按钮权限(文件管理页上传按钮,菜单ID 60)
+INSERT INTO `sys_menu` VALUES (60, '文件上传', '', 3, 'file-add', '', 50, 2, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+
+-- 文件删除按钮权限(文件管理页删除按钮,菜单ID 61)
+INSERT INTO `sys_menu` VALUES (61, '文件删除', '', 3, 'file-del', '', 50, 3, 1, 1, 1, '2026-08-21 12:00:00', '2026-08-21 12:00:00');
+
 -- 部门表
 CREATE TABLE `sys_department` (
     `dept_id`      BIGINT	PRIMARY KEY  AUTO_INCREMENT     COMMENT '菜单ID,主键',

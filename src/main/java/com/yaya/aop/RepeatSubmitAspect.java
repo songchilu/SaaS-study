@@ -1,6 +1,5 @@
 package com.yaya.aop;
 
-import com.yaya.annotation.LogCollect;
 import com.yaya.annotation.RepeatSubmit;
 import com.yaya.exception.GlobalCommonException;
 import com.yaya.util.RedisClient;

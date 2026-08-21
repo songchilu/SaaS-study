@@ -28,22 +28,101 @@
         .layui-form-radio:hover>*, .layui-form-radioed, .layui-form-radioed>i{
             color: #409eff;
         }
+        /* 行内小按钮 */
+        .yaya-btn-sm{
+            padding: 0 10px;
+            height: 26px;
+            line-height: 26px;
+            font-size: 12px;
+            display: inline-block;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
     <div class="yaya-container">
         <div class="yaya-panel">
-            <form class="layui-form" style="padding: 10px 0;">
+            <form class="layui-form" style="padding: 10px 0;" lay-filter="file-search-form">
                 <div class="layui-row">
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">文件名</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="fileName" placeholder="文件名" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
+                    <div class="layui-col-md2 layui-col-sm2 yaya-form-item">
+                        <label class="yaya-form-label">类型</label>
+                        <div class="yaya-input-block">
+                            <select name="fileType" lay-search>
+                                <option value="">全部</option>
+                                <option value="image">图片</option>
+                                <option value="video">视频</option>
+                                <option value="file">文件</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">部门</label>
+                        <div class="yaya-input-block">
+                            <select name="deptId" id="file-dept-select" lay-search>
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                        <label class="yaya-form-label">上传人</label>
+                        <div class="yaya-input-block">
+                            <input type="text" name="nickname" placeholder="上传人昵称" class="layui-input yaya-input-border-radius">
+                        </div>
+                    </div>
                     <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
                         <label class="yaya-form-label">地址</label>
                         <div class="yaya-input-block">
                             <input type="text" name="fileServerUrl" placeholder="文件服务地址" class="layui-input yaya-input-border-radius">
                         </div>
                     </div>
-                    <div class="layui-col-md3 layui-col-sm3 yaya-form-item">
+                    <div class="layui-col-md4 layui-col-sm4 yaya-form-item">
+                        <label class="yaya-form-label">上传时间</label>
+                        <div class="yaya-input-block">
+                            <input type="text" id="file-time-range" placeholder="选择时间范围" class="layui-input yaya-input-border-radius">
+                            <input type="hidden" name="startTime">
+                            <input type="hidden" name="endTime">
+                        </div>
+                    </div>
+                    <div class="layui-col-md6 layui-col-sm6 yaya-form-item">
                         <button type="button" class="yaya-btn yaya-primary" lay-submit lay-filter="search"><i class="iconfont icon-CRMEB-sousuo-xianxing" style="padding-right: 5px;"></i> 搜索</button>
-                        <button type="reset" class="yaya-btn" style="margin-left: 10px;"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                        <button type="reset" class="yaya-btn" style="margin-left: 10px;" id="file-reset-btn"><i class="iconfont icon-CRMEB-shuaxin1" style="padding-right: 5px;"></i> 重置</button>
+                        <!-- 上传按钮(有权限才显示,弹窗选择图片/视频/文件) -->
+                        <button type="button" id="upload-btn" class="yaya-btn yaya-primary" style="margin-left: 10px;display:none;"><i class="iconfont icon-CRMEB-tianjiawenjian-xianxing" style="padding-right: 5px;"></i> 上传</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- 上传弹窗模板 -->
+        <div id="upload-popup-tpl" style="display:none;">
+            <form class="layui-form" style="padding: 20px 20px 0;">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">类型</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="uploadType" value="image" title="图片" checked lay-filter="uploadType">
+                        <input type="radio" name="uploadType" value="video" title="视频" lay-filter="uploadType">
+                        <input type="radio" name="uploadType" value="file" title="文件" lay-filter="uploadType">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">文件</label>
+                    <div class="layui-input-block">
+                        <button type="button" id="popup-choose-btn" class="yaya-btn yaya-primary"><i class="iconfont icon-CRMEB-xuanzewenjian-xianxing" style="padding-right: 5px;"></i>选择文件</button>
+                        <span id="popup-upload-name" style="margin-left: 10px;color:#666;"></span>
+                        <input type="file" id="popup-file-input" style="display:none;">
+                    </div>
+                </div>
+                <div class="layui-form-item" id="popup-progress-item" style="display:none;">
+                    <label class="layui-form-label">进度</label>
+                    <div class="layui-input-block">
+                        <div class="layui-progress layui-progress-big" lay-showPercent="yes" lay-filter="filter-popup">
+                            <div class="layui-progress-bar" lay-percent=""></div>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -61,6 +140,63 @@
             const form = layui.form;
             const table = layui.table;
             const layer = layui.layer;
+            const element = layui.element;
+            const laydate = layui.laydate;
+
+            //上传按钮权限控制
+            if(is_super || hasPermission('file-add')){
+                $("#upload-btn").show();
+            }
+
+            //================ 部门下拉 ================
+            //加载部门树,平铺成下拉选项
+            $.ajax({
+                type: 'POST',
+                url: server_url+'/getSysDepartmentTree',
+                headers: {'Authorization': token},
+                data: {status: 1},
+                dataType: 'json',
+                success: function(res){
+                    if(res.code===0){
+                        let depts = [];
+                        function walk(list){
+                            list.forEach(function(d){
+                                depts.push({id: d.deptId, name: d.deptName});
+                                if(d.children && d.children.length){
+                                    walk(d.children);
+                                }
+                            });
+                        }
+                        walk(res.data || []);
+                        let html = '<option value="">全部</option>';
+                        depts.forEach(function(d){
+                            html += '<option value="'+d.id+'">'+d.name+'</option>';
+                        });
+                        $("#file-dept-select").html(html);
+                        form.render('select');
+                    }
+                }
+            });
+
+            //================ 上传时间范围 ================
+            laydate.render({
+                elem: '#file-time-range',
+                type: 'datetime',
+                range: '~',
+                done: function(value){
+                    if(value){
+                        let parts = value.split(' ~ ');
+                        $('input[name="startTime"]').val(parts[0]);
+                        $('input[name="endTime"]').val(parts[1]);
+                    }
+                }
+            });
+
+            //重置时清空时间隐藏域
+            $("#file-reset-btn").click(function(){
+                $('input[name="startTime"]').val('');
+                $('input[name="endTime"]').val('');
+            });
 
             //搜索
             form.on('submit(search)', function(data){
@@ -80,22 +216,169 @@
                 return false; // 阻止默认 form 跳转
             });
 
+            //================ 弹窗上传 ================
+            //当前弹窗选择的类型(图片/视频/文件)
+            let popupUploadType = 'image';
+            //弹窗层索引(用于上传成功后关闭弹窗)
+            let uploadLayerIndex;
+            //上传类型 -> 接口/允许的扩展名
+            const uploadTypeConfig = {
+                image: { url: server_url+'/uploadImage', exts: ['jpg','jpeg','png','gif'], name: '图片' },
+                video: { url: server_url+'/uploadVideo', exts: ['mp4'], name: '视频' },
+                file:  { url: server_url+'/uploadFile',  exts: ['zip','rar','mp3','mp4','pdf','doc','docx','xls','xlsx','ppt','pptx','txt'], name: '文件' }
+            };
+
+            //打开上传弹窗
+            $("#upload-btn").click(function(){
+                uploadLayerIndex = layer.open({
+                    type: 1,
+                    title: '上传',
+                    area: ['480px', '280px'],
+                    content: $('#upload-popup-tpl').html(),
+                    success: function(){
+                        form.render(); //渲染弹窗内的单选框
+                    }
+                });
+            });
+
+            //切换上传类型(全局监听一次)
+            form.on('radio(uploadType)', function(data){
+                popupUploadType = data.value;
+                $("#popup-upload-name").text('');
+            });
+
+            //点击"选择文件" -> 触发隐藏的文件框
+            $(document).on('click', '#popup-choose-btn', function(){
+                $("#popup-file-input").click();
+            });
+
+            //选择文件后,按类型校验并上传
+            $(document).on('change', '#popup-file-input', function(){
+                let file = this.files[0];
+                if(!file){
+                    return;
+                }
+                let cfg = uploadTypeConfig[popupUploadType];
+                //取扩展名
+                let dot = file.name.lastIndexOf('.');
+                let ext = dot > -1 ? file.name.substring(dot + 1).toLowerCase() : '';
+                if(cfg.exts.indexOf(ext) === -1){
+                    layer.msg('当前类型仅支持: ' + cfg.exts.join('/'));
+                    this.value = '';
+                    return;
+                }
+                //显示文件名和进度条
+                $("#popup-upload-name").text(file.name);
+                $("#popup-progress-item").show();
+                element.progress('filter-popup', '0%');
+                let uploadMsgIndex = layer.msg(cfg.name + '上传中...', {icon: 16, time: 0});
+                //FormData上传
+                let fd = new FormData();
+                fd.append('file', file);
+                $.ajax({
+                    type: 'POST',
+                    url: cfg.url,
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    headers: {'Authorization': token},
+                    xhr: function(){
+                        let xhr = new XMLHttpRequest();
+                        xhr.upload.addEventListener('progress', function(e){
+                            if(e.lengthComputable){
+                                let pct = Math.round(e.loaded / e.total * 100);
+                                element.progress('filter-popup', pct + '%');
+                            }
+                        });
+                        return xhr;
+                    },
+                    success: function(res){
+                        layer.close(uploadMsgIndex);
+                        $("#popup-progress-item").hide();
+                        if(res.code===0){//成功
+                            layer.msg('上传成功');
+                            layer.close(uploadLayerIndex); //关闭弹窗
+                            table.reload('table-file');    //刷新列表
+                        }else{
+                            layer.msg(res.msg, {icon: 5});
+                        }
+                    },
+                    error: function(){
+                        layer.close(uploadMsgIndex);
+                        $("#popup-progress-item").hide();
+                        layer.msg('上传失败,请重试', {icon: 5});
+                    }
+                });
+            });
+
+            //================ 列表预览 ================
+            //文件类型判断: 按URL路径区分 图片/视频/文件
+            function getFileType(fileServerUrl){
+                if(fileServerUrl && fileServerUrl.indexOf('/images/') > -1){
+                    return 'image';
+                }
+                if(fileServerUrl && fileServerUrl.indexOf('/videos/') > -1){
+                    return 'video';
+                }
+                return 'file';
+            }
+
+            //视频封面缓存(fileId -> dataURL)
+            const videoCoverCache = {};
+
+            //截取视频封面(隐藏video+canvas取首帧)
+            function captureVideoCover(url){
+                return new Promise(function(resolve, reject){
+                    let video = document.createElement('video');
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.preload = 'auto';
+                    video.src = url;
+                    let settled = false;
+                    function finish(){
+                        if(settled){ return; }
+                        settled = true;
+                        try{
+                            let canvas = document.createElement('canvas');
+                            canvas.width = 160;
+                            canvas.height = 90;
+                            let ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        }catch(e){
+                            reject(e);
+                        }finally{
+                            video.removeAttribute('src');
+                            video.load();
+                        }
+                    }
+                    video.addEventListener('loadeddata', function(){
+                        try{
+                            video.currentTime = 0.1; //跳转到0.1秒附近取一帧作为封面
+                        }catch(e){}
+                    });
+                    video.addEventListener('seeked', finish);
+                    video.addEventListener('error', function(){
+                        if(!settled){ settled = true; reject(new Error('视频加载失败')); }
+                    });
+                    //兜底超时
+                    setTimeout(function(){
+                        if(!settled){ settled = true; reject(new Error('封面截取超时')); }
+                    }, 8000);
+                });
+            }
 
             //表格渲染
             table.render({
                 elem: '#table-file',
                 url: server_url+'/getFilePage',
                 method:'POST',
-                where:{
-                    logType:1
-                },
                 headers:{
                     'Authorization':token
                 },
                 skin:'line',
                 height:'full',
                 parseData: function(res){
-                    //console.log(res);
                     return {
                         "code" : res.code,
                         "msg"  : res.msg,
@@ -114,6 +397,25 @@
                     pageName: 'pageNo', // 页码的参数名称，默认：page
                     limitName: 'pageSize' // 每页数据条数的参数名，默认：limit
                 },
+                done: function(){
+                    //加载视频封面(命中缓存直接显示,否则异步截帧)
+                    $(".video-cover-img").each(function(){
+                        let $img = $(this);
+                        let fileId = $img.data('file-id');
+                        let url = $img.data('url');
+                        if(videoCoverCache[fileId]){
+                            $img.attr('src', videoCoverCache[fileId]);
+                            return;
+                        }
+                        captureVideoCover(url).then(function(dataUrl){
+                            videoCoverCache[fileId] = dataUrl;
+                            $img.attr('src', dataUrl);
+                        }).catch(function(){
+                            //封面截取失败,显示占位图标,保留点击播放
+                            $img.replaceWith('<div lay-event="preview" style="width:100px;height:60px;line-height:60px;background:#f5f7fa;border-radius:4px;cursor:pointer;"><i class="iconfont icon-CRMEB-shipin-xianxing" style="font-size:24px;color:#409eff;"></i></div>');
+                        });
+                    });
+                },
                 cols: [[
                     {
                         title: '#',
@@ -121,26 +423,124 @@
                     },
                     {
                         field:'fileName',
-                        title: '文件名'
+                        title: '文件名',
+                        minWidth: 120
+                    },
+                    {
+                        title: '类型',
+                        width: 90,
+                        align: 'center',
+                        templet: function(d){
+                            let type = getFileType(d.fileServerUrl);
+                            if(type === 'image'){
+                                return '<span class="layui-badge layui-bg-blue">图片</span>';
+                            }
+                            if(type === 'video'){
+                                return '<span class="layui-badge layui-bg-green">视频</span>';
+                            }
+                            return '<span class="layui-badge layui-bg-gray">文件</span>';
+                        }
+                    },
+                    {
+                        title: '预览',
+                        width: 140,
+                        align: 'center',
+                        templet: function(d){
+                            let type = getFileType(d.fileServerUrl);
+                            let url = file_url + '/' + d.fileServerUrl;
+                            if(type === 'image'){
+                                return '<img lay-event="preview" src="'+url+'" style="width:100px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;" alt="图片">';
+                            }
+                            if(type === 'video'){
+                                return '<img class="video-cover-img" lay-event="preview" data-file-id="'+d.fileId+'" data-url="'+url+'" src="" style="width:100px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;background:#f0f2f5;">';
+                            }
+                            return '<div style="width:100px;height:60px;line-height:60px;background:#f5f7fa;border-radius:4px;"><i class="iconfont icon-CRMEB-wenjian-xianxing" style="font-size:24px;color:#409eff;"></i></div>';
+                        }
                     },
                     {
                         field:'deptName',
-                        title: '部门'
+                        title: '部门',
+                        width: 100
                     },
                     {
                         field:'nickname',
-                        title:'上传人'
-                    },
-                    {
-                        field:'fileServerUrl',
-                        title: '访问地址'
+                        title:'上传人',
+                        width: 100
                     },
                     {
                         field:'createTime',
-                        title: '上传时间'
+                        title: '上传时间',
+                        width: 160
+                    },
+                    {
+                        field:'fileServerUrl',
+                        title: '访问地址',
+                        minWidth: 180
+                    },
+                    {
+                        title: '操作',
+                        width: 140,
+                        align: 'center',
+                        templet: function(d){
+                            let url = file_url + '/' + d.fileServerUrl;
+                            let html = '<a class="yaya-btn yaya-btn-sm yaya-primary" href="'+url+'" download>下载</a>';
+                            if(is_super || hasPermission('file-del')){
+                                html += '<button type="button" class="yaya-btn yaya-btn-sm" lay-event="delete" style="margin-left:5px;">删除</button>';
+                            }
+                            return html;
+                        }
                     }
                 ]]
             })
+
+            //行工具事件 - 图片放大/视频播放/删除
+            table.on('tool(table-file)', function(obj){
+                let d = obj.data;
+                if(obj.event === 'preview'){
+                    let url = file_url + '/' + d.fileServerUrl;
+                    let type = getFileType(d.fileServerUrl);
+                    if(type === 'image'){
+                        //图片放大预览
+                        layer.photos({
+                            photos: {
+                                title: d.fileName,
+                                data: [{ src: url, alt: d.fileName }]
+                            },
+                            anim: 5
+                        });
+                    }else if(type === 'video'){
+                        //视频播放预览
+                        layer.open({
+                            type: 1,
+                            title: d.fileName,
+                            area: ['800px', '450px'],
+                            content: '<video controls autoplay style="width:100%;height:100%;background:#000;" src="'+url+'"></video>'
+                        });
+                    }
+                }else if(obj.event === 'delete'){
+                    layer.confirm('确定删除文件【'+d.fileName+'】吗?', {icon: 3, title: '删除确认'}, function(index){
+                        $.ajax({
+                            type: 'POST',
+                            url: server_url+'/deleteFile',
+                            headers: {'Authorization': token},
+                            data: {fileId: d.fileId},
+                            dataType: 'json',
+                            success: function(res){
+                                if(res.code===0){
+                                    layer.msg('删除成功');
+                                    table.reload('table-file');
+                                }else{
+                                    layer.msg(res.msg, {icon: 5});
+                                }
+                            },
+                            error: function(){
+                                layer.msg('删除失败,请重试', {icon: 5});
+                            }
+                        });
+                        layer.close(index);
+                    });
+                }
+            });
 
         });
     </script>

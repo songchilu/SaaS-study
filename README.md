@@ -274,9 +274,8 @@ https://gitee.com/ukoko/ya-ya-saa-s-plus
 ## 九、参与贡献🚀
 
 ```
-前后端由作者一个人+AI工具完成
-作者博客: https://hs-an-yue.github.io/
-作者邮箱: hd1611756908@163.com
+前后端由作者yaya+AI工具+songchilu二次开发完成
+作者邮箱: 1793285209@qq.com
 ```
 
 ## 十、致谢💖
